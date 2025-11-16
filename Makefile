@@ -1,7 +1,7 @@
 CC= g++
 INCL=/home/valentina/lib
 COMPILE = $(CC) -c -Wall -I $(INCL)
-LINK = $(CC) -L $(LIBS)
+LINK = $(CC)
 
 OBJS= a.o ubicacio.o
 #OBJS= prog.o terminal.o cataleg.o contenidor.o ubicacio.o
@@ -10,7 +10,7 @@ a.exe : $(OBJS)
 	$(LINK) -o a.exe $(OBJS) -lesin
 
 a.o : a.cpp
-	$(COMPILE) a.cpp -lesin
+	$(COMPILE) a.cpp
 
 
 
@@ -30,7 +30,7 @@ a.o : a.cpp
 
 
 ubicacio.o : ubicacio.cpp
-	$(COMPILE) ubicacio.cpp -lesin
+	$(COMPILE) ubicacio.cpp
 
 #contenidor.o : contenidor.cpp
 #	$(COMPILE) contenidor.cpp -lesin
