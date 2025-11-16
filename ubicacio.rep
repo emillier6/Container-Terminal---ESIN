@@ -1,0 +1,6 @@
+int _filera;
+int _placa;
+int _pis;
+
+static bool fora_terminal(int i, int j, int k);
+static bool a_espera(int i, int j, int k);
