@@ -2,5 +2,12 @@ int _filera;
 int _placa;
 int _pis;
 
+//coste constante
+//pre: true
+//post: devuelve true en el caso de que i, j y k sean iguales a -1 (corrresponde a que el contenedor no está en la terminal)
 static bool fora_terminal(int i, int j, int k);
+
+//coste constante
+//pre: true
+//post: devuelve true en el caso de que i == -1 y j y k igual a 0 (corresponde a que el contenedor está en la zona de espera)
 static bool a_espera(int i, int j, int k);

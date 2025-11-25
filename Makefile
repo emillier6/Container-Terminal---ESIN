@@ -3,16 +3,14 @@ INCL=/home/valentina/lib
 COMPILE = $(CC) -c -Wall -I $(INCL)
 LINK = $(CC)
 
-OBJS= a.o ubicacio.o
+OBJS= ubicacio_driver.o ubicacio.o
 #OBJS= prog.o terminal.o cataleg.o contenidor.o ubicacio.o
 
-a.exe : $(OBJS)
-	$(LINK) -o a.exe $(OBJS) -lesin
+ubicacio_driver.exe : $(OBJS)
+	$(LINK) -o ubicacio_driver.exe $(OBJS) -lesin
 
-a.o : a.cpp
-	$(COMPILE) a.cpp
-
-
+ubicacio_driver.o : ubicacio_driver.cpp
+	$(COMPILE) ubicacio_driver.cpp
 
 # prog.exe : $(OBJS) $(LIBS)/
 # 	$(LINK) -o prog.exe $(OBJS) -lesin

@@ -1,0 +1,73 @@
+Se crea U1 = (-1, -1, -1)
+Se intenta crear U2 = (-2, 1, 1)
+Se crea U3 = (2, 1, 1)
+
+   Constructor por copia
+
+       ubicacio U4 = ubicacio(U1)
+       Filera: -1 Plaça: -1 Pis: -1
+
+   Asignación
+
+       U4 = U3
+       Filera: 2 Plaça: 1 Pis: 1
+
+   Operador ==
+
+       U4 = (2, 1, 1)
+       U4 == U3: 1
+       U4 == U1: 0
+
+   Operacdor !=
+
+       U4 = (2, 1, 1)
+       U4 != U3: 0
+       U4 != U1: 1
+
+   Operador <
+
+       U4 = (2, 1, 1)
+       U1 = (2, 0, 0)
+       U1 < U4: 1
+       U1 = (2, 1, 0)
+       U1 < U4: 1
+       U1 = (2, 1, 1)
+       U1 < U4: 0
+       U1 = (2, 0, 1)
+       U1 < U4: 1
+       U1 = (2, 3, 1)
+       U1 < U4: 0
+
+   Operador <=
+
+       U4 = (2, 1, 1)
+       U1 = (1, 1, 1)
+       U1 <= U4: 1
+       U1 = (0, 1, 1)
+       U1 <= U4: 1
+       U1 = (2, 3, 0)
+       U1 <= U4: 1
+
+   Operador >
+
+       U4 = (2, 1, 1)
+       U1 = (2, 0, 0)
+       U1 > U4: 0
+       U1 = (2, 1, 0)
+       U1 > U4: 0
+       U1 = (2, 1, 1)
+       U1 > U4: 0
+       U1 = (2, 0, 1)
+       U1 > U4: 0
+       U1 = (2, 3, 1)
+       U1 > U4: 1
+
+   Operador >=
+
+       U4 = (2, 1, 1)
+       U1 = (1, 1, 1)
+       U1 >= U4: 0
+       U1 = (0, 1, 1)
+       U1 >= U4: 0
+       U1 = (2, 3, 0)
+       U1 >= U4: 1
