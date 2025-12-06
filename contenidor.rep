@@ -1,0 +1,19 @@
+string _matricula;      // Matrícula del contenedor
+nat _longitud;          // Longitud del contenedor
+
+// Coste n·long(n)
+// Pre: true
+// Post: fusiona las partes ordenadas del string s de manera ordenada
+static void merge(string& s, int left, int mid, int right);
+
+// Coste constante
+// Pre: true
+// Post: left y right indican los límites izquierdo y derecho 
+// de la partición del string s respectivamente
+static void mergeSort(string& s, int left, int right);
+
+// Coste n·log(n)
+// Pre: true
+// Post: devuelve un string que contiene los caracteres de merge
+// en orden alfabético
+static string sort(const string& m);
