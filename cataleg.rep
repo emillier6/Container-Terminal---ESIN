@@ -1,0 +1,33 @@
+// Representació del catàleg utilitzant sinònims encadenats indirectes
+// (separate chaining), segons les estructures del Tema 6 d’ESIN.
+
+struct node_hash {
+    string _k;          // clau
+    Valor  _v;          // valor associat
+    node_hash* _seg;    // següent node de la llista
+
+    // Constructor del node
+    node_hash(const string &k, const Valor &v, node_hash* seg = nullptr)
+        : _k(k), _v(v), _seg(seg) {}
+};
+
+// Atributs privats de la classe cataleg<Valor>
+node_hash** _taula;     // vector de punters a llistes encadenades
+nat _M;                 // mida de la taula
+nat _quants;            // nombre d’elements inserits al catàleg
+
+static unsigned long const MULT = 31415926;
+
+// Funció de dispersió (hash) — mètode privat
+nat hash(const string &k) const noexcept {
+    // Hash polinòmic previ
+    unsigned long h = 0;
+    //Equivalent:
+    //for (int i = 0; i < k.size(); ++i)
+    for (char c : k) h = h * 131 + c;
+
+    // Mètode del quadrat mitjà amb constat PI
+    unsigned long h2 = ((h * h * MULT) << 20) >> 4;
+
+    return h2 % _M;
+}
