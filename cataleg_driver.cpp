@@ -33,9 +33,13 @@ int main() {
             else if (op == 1) {
                 string k;
                 int v;
-                cin >> k >> v;
+
+                cin >> ws;
+                getline(cin, k, ' ');
+                cin >> v;
+
                 C.assig(k, v);
-                cout << "OK: Inserit/actualitzat (" << k << ", " << v << ")\n";
+                cout << "OK: Inserit/actualitzat (\"" << k << "\", " << v << ")\n";
             }
 
             else if (op == 2) {

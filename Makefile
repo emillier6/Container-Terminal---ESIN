@@ -4,13 +4,15 @@ LINK = $(CC)
 
 OBJUBI= ubicacio_driver.o ubicacio.o
 OBJCONT= contenidor_driver.o contenidor.o
+OBJCAT= cataleg_driver.o
 
 ubi : ubicacio_driver.exe
 cont: contenidor_driver.exe
+cat: cataleg_driver.exe
 clean:
 	rm *.o;
 	rm *.exe;
-	echo "borrado"
+	@echo "Fitxers esborrats\n"
 
 #-------------------------------------------------------
 # UBICACIO
@@ -31,5 +33,12 @@ contenidor_driver.o : contenidor_driver.cpp
 contenidor.o : contenidor.cpp
 	$(COMPILE) contenidor.cpp -lesin
 
+#-------------------------------------------------------
+# CATALEG
 
+cataleg_driver.exe : $(OBJCAT)
+	$(LINK) -o cataleg_driver.exe $(OBJCAT) -lesin
+
+cataleg_driver.o : cataleg_driver.cpp cataleg.hpp cataleg.rep cataleg.t
+	$(COMPILE) cataleg_driver.cpp
 
