@@ -5,10 +5,12 @@ LINK = $(CC)
 OBJUBI= ubicacio_driver.o ubicacio.o
 OBJCONT= contenidor_driver.o contenidor.o
 OBJCAT= cataleg_driver.o
+OBJTERM= terminal_driver.o terminal.o ubicacio.o contenidor.o
 
 ubi : ubicacio_driver.exe
 cont: contenidor_driver.exe
 cat: cataleg_driver.exe
+term: terminal_driver.exe
 clean:
 	rm *.o;
 	rm *.exe;
@@ -42,3 +44,14 @@ cataleg_driver.exe : $(OBJCAT)
 cataleg_driver.o : cataleg_driver.cpp cataleg.hpp cataleg.rep cataleg.t
 	$(COMPILE) cataleg_driver.cpp
 
+#-------------------------------------------------------
+# TERMINAL
+
+terminal_driver.exe : $(OBJTERM)
+	$(LINK) -o terminal_driver.exe $(OBJTERM) -lesin
+
+terminal_driver.o : terminal_driver.cpp terminal.hpp
+	$(COMPILE) terminal_driver.cpp
+
+terminal.o : terminal.cpp terminal.hpp terminal.rep
+	$(COMPILE) terminal.cpp
