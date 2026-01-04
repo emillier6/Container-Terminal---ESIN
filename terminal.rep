@@ -1,0 +1,40 @@
+// Dimensions i configuració
+nat _n;                 // nombre de fileres
+nat _m;                 // nombre de places per filera
+nat _h;                 // alçada màxima d'apilament
+estrategia _st;         // estratègia d'inserció/retirada
+
+// Comptador d'operacions de grua
+nat _ops_grua;
+
+// ------------------------------
+// Magatzem (àrea d'emmagatzematge)
+//
+// Representació en un sol bloc:
+// _mag[pos(i,j,k)] = matrícula (string) o "" si buit.
+// ------------------------------
+string* _mag;
+
+// Accés a l'índex del bloc 1D
+inline nat pos(nat i, nat j, nat k) const noexcept {
+  return (i * _m + j) * _h + k;
+}
+
+// ------------------------------
+// Índex per matrícula
+// ------------------------------
+struct info_cont {
+  contenidor c;
+  bool en_espera;
+  ubicacio u;
+
+  info_cont(const contenidor& cc, bool ee, const ubicacio& uu)
+    : c(cc), en_espera(ee), u(uu) {}
+};
+
+cataleg<info_cont> _idx;
+
+// ------------------------------
+// Àrea d'espera
+// ------------------------------
+list<contenidor> _espera;
