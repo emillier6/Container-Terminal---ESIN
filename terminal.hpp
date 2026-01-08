@@ -61,8 +61,10 @@ private:
   bool es_buit(nat i, nat j, nat k) const noexcept;
   bool te_suport(nat i, nat j, nat k, nat len) const noexcept;
   bool pot_colocar(nat i, nat j, nat k, nat len) const noexcept;
-  bool usable10(nat i, nat j, nat k) const noexcept;
-  bool troba_forat_lliure(nat len, ubicacio &u) const noexcept;
+
+  // --- Helpers per LLIURE ---
+  bool lloc_usable10(nat i, nat j, nat k) const noexcept;
+  bool millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) const noexcept;
   #include "terminal.rep"
 };
 #endif

@@ -23,7 +23,6 @@ static bool esta_a_llista(const list<string> &L, const string &x) noexcept
   return false;
 }
 
-
 bool terminal::es_buit(nat i, nat j, nat k) const noexcept {
   return _mag[pos(i, j, k)] == "";
 }
@@ -50,16 +49,87 @@ bool terminal::pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
   return te_suport(i, j, k, len);
 }
 
-// (De moment no s'usa, la deixem preparada per quan implementeu LLIURE de veritat)
-bool terminal::usable10(nat i, nat j, nat k) const noexcept {
+// --- Helpers per LLIURE ---
+// Una plaça és usable per un 10 si està buida i (k==0) o té suport
+bool terminal::lloc_usable10(nat i, nat j, nat k) const noexcept
+{
   if (!es_buit(i, j, k)) return false;
   if (k == 0) return true;
   return !es_buit(i, j, k - 1);
 }
 
-// (De moment no s'usa, la deixem preparada per quan implementeu LLIURE de veritat)
-bool terminal::troba_forat_lliure(nat /*len*/, ubicacio & /*u*/) const noexcept {
-  return false;
+// BEST_FIT + penalitza deixar forats de mida 1
+bool terminal::millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) const noexcept
+{
+  bool trobat = false;
+
+  nat millor_i = 0, millor_j = 0, millor_k = 0;
+  nat millor_puntuacio = 0;
+
+  for (nat i = 0; i < _n; ++i)
+  {
+    for (nat k = 0; k < _h; ++k)
+    {
+      nat j = 0;
+      while (j < _m)
+      {
+        if (!lloc_usable10(i, j, k))
+        {
+          ++j;
+          continue;
+        }
+
+        // Segment usable [ini..fi]
+        nat ini = j;
+        while (j < _m && lloc_usable10(i, j, k)) ++j;
+        nat fi = j - 1;
+
+        nat mida_forat = fi - ini + 1;
+        if (mida_forat < len) continue;
+
+        // Provar totes les posicions dins el forat
+        for (nat p = ini; p + len - 1 <= fi; ++p)
+        {
+          if (!pot_colocar(i, p, k, len)) continue;
+
+          nat sobrant_esq = p - ini;
+          nat sobrant_dreta = fi - (p + len - 1);
+          nat sobrant = sobrant_esq + sobrant_dreta;
+
+          // Penalització forta si deixem un forat d'1
+          nat penal = 0;
+          if (sobrant_esq == 1) penal += 100;
+          if (sobrant_dreta == 1) penal += 100;
+
+          nat score = penal * 1000 + sobrant;
+
+          bool millor = false;
+          if (!trobat) millor = true;
+          else if (score < millor_puntuacio) millor = true;
+          else if (score == millor_puntuacio)
+          {
+            // desempat simple i estable
+            if (i < millor_i) millor = true;
+            else if (i == millor_i && p < millor_j) millor = true;
+            else if (i == millor_i && p == millor_j && k < millor_k) millor = true;
+          }
+
+          if (millor)
+          {
+            trobat = true;
+            millor_puntuacio = score;
+            millor_i = i; millor_j = p; millor_k = k;
+          }
+        }
+      }
+    }
+  }
+
+  if (!trobat) return false;
+
+  u = ubicacio((int)millor_i, (int)millor_j, (int)millor_k);
+  puntuacio = millor_puntuacio;
+  return true;
 }
 
 // ============================================================
@@ -193,7 +263,7 @@ void terminal::area_espera(list<string> &l) const noexcept {
 }
 
 // ============================================================
-// INSERCIÓ (FIRST_FIT i LLIURE: mateix comportament per passar públics)
+// INSERCIÓ (FIRST_FIT vs LLIURE)
 // ============================================================
 
 void terminal::insereix_contenidor(const contenidor &c) {
@@ -205,24 +275,34 @@ void terminal::insereix_contenidor(const contenidor &c) {
   bool col_locat = false;
   ubicacio u(0, 0, 0);
 
-  // FIRST_FIT (i LLIURE provisional): recorregut filera->placa->pis
-  nat i = 0;
-  while (i < _n && !col_locat) {
-    nat j = 0;
-    while (j < _m && !col_locat) {
-      nat k = 0;
-      while (k < _h && !col_locat) {
-        if (pot_colocar(i, j, k, len)) {
-          col_locat = true;
-          u = ubicacio((int)i, (int)j, (int)k);
+  // --- 1) Buscar lloc segons estratègia ---
+  if (_st == estrategia::FIRST_FIT)
+  {
+    // Recorregut filera -> placa -> pis
+    nat i = 0;
+    while (i < _n && !col_locat) {
+      nat j = 0;
+      while (j < _m && !col_locat) {
+        nat k = 0;
+        while (k < _h && !col_locat) {
+          if (pot_colocar(i, j, k, len)) {
+            col_locat = true;
+            u = ubicacio((int)i, (int)j, (int)k);
+          }
+          ++k;
         }
-        ++k;
+        ++j;
       }
-      ++j;
+      ++i;
     }
-    ++i;
+  }
+  else
+  {
+    nat score = 0;
+    col_locat = millor_ubicacio_lliure(len, u, score);
   }
 
+  // --- 2) Escriure al magatzem o posar a espera ---
   if (col_locat) {
     nat i0 = (nat)u.filera();
     nat j0 = (nat)u.placa();
@@ -237,7 +317,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
     _idx.assig(mat, info_cont(c, false, u));
     _ops_grua++; // inserció directa al magatzem
 
-    // Recol·locació des de l’espera (LIFO: l’últim inserit és el primer que intentem)
+    // --- 3) Recol·locació des de l’espera ---
     bool mogut = true;
     while (mogut) {
       mogut = false;
@@ -245,31 +325,60 @@ void terminal::insereix_contenidor(const contenidor &c) {
       list<contenidor>::iterator it_millor = _espera.end();
       ubicacio u_millor(0, 0, 0);
 
-      for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it) {
-        bool ok = false;
-        ubicacio utry(0, 0, 0);
-        nat llen = places_contenidor(*it);
+      if (_st == estrategia::FIRST_FIT)
+      {
+        // FIRST_FIT: LIFO => ens quedem l’últim que encaixa
+        for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it) {
+          bool ok = false;
+          ubicacio utry(0, 0, 0);
+          nat llen = places_contenidor(*it);
 
-        nat ii = 0;
-        while (ii < _n && !ok) {
-          nat jj = 0;
-          while (jj < _m && !ok) {
-            nat kk = 0;
-            while (kk < _h && !ok) {
-              if (pot_colocar(ii, jj, kk, llen)) {
-                ok = true;
-                utry = ubicacio((int)ii, (int)jj, (int)kk);
+          nat ii = 0;
+          while (ii < _n && !ok) {
+            nat jj = 0;
+            while (jj < _m && !ok) {
+              nat kk = 0;
+              while (kk < _h && !ok) {
+                if (pot_colocar(ii, jj, kk, llen)) {
+                  ok = true;
+                  utry = ubicacio((int)ii, (int)jj, (int)kk);
+                }
+                ++kk;
               }
-              ++kk;
+              ++jj;
             }
-            ++jj;
+            ++ii;
           }
-          ++ii;
-        }
 
-        if (ok) {
-          it_millor = it;   // ens quedem l'últim que encaixa (LIFO)
-          u_millor = utry;
+          if (ok) {
+            it_millor = it;
+            u_millor = utry;
+          }
+        }
+      }
+      else
+      {
+        // LLIURE: triem el contenidor de l’espera que encaixa millor (score mínim)
+        bool trobat = false;
+        nat millor_score = 0;
+
+        for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
+        {
+          nat llen = places_contenidor(*it);
+          ubicacio utry(0,0,0);
+          nat score = 0;
+
+          bool ok = millor_ubicacio_lliure(llen, utry, score);
+          if (ok)
+          {
+            if (!trobat || score < millor_score)
+            {
+              trobat = true;
+              millor_score = score;
+              it_millor = it;
+              u_millor = utry;
+            }
+          }
         }
       }
 
@@ -303,7 +412,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
 }
 
 // ============================================================
-// RETIRADA (LLIURE provisional: igual que FIRST_FIT)
+// RETIRADA (moviment necessari igual; recol·locació depèn d’estratègia)
 // ============================================================
 
 void terminal::retira_contenidor(const string &m) {
@@ -312,9 +421,7 @@ void terminal::retira_contenidor(const string &m) {
 
   info_cont target = _idx[m];
 
-  // ------------------------------------------------------------
   // 0) Si és a l’àrea d’espera: eliminar immediatament (0 grua)
-  // ------------------------------------------------------------
   if (target.en_espera)
   {
     for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
@@ -335,21 +442,14 @@ void terminal::retira_contenidor(const string &m) {
   nat pis = (nat)target.u.pis();
   nat len_target = places_contenidor(target.c);
 
-  // ------------------------------------------------------------
-  // 1) Determinar quins contenidors són NECESSARIS moure
-  //    per poder retirar el target (i els que bloquegen aquests)
-  // ------------------------------------------------------------
-
-  // Columnes que cal tenir "netes" a la part superior
+  // 1) Determinar quins contenidors són necessaris moure
   bool *cal_netejar = new bool[_m];
   for (nat j = 0; j < _m; ++j)
     cal_netejar[j] = false;
 
-  // Inicialment: les columnes ocupades pel target
   for (nat j = placa; j < placa + len_target; ++j)
     cal_netejar[j] = true;
 
-  // Matrícules dels contenidors a moure
   list<string> necessaris;
 
   bool afegit = true;
@@ -357,7 +457,6 @@ void terminal::retira_contenidor(const string &m) {
   {
     afegit = false;
 
-    // Busquem qualsevol contenidor que aparegui a sobre d'una columna marcada
     for (nat k = pis + 1; k < _h; ++k)
     {
       for (nat j = 0; j < _m; ++j)
@@ -377,7 +476,6 @@ void terminal::retira_contenidor(const string &m) {
               necessaris.push_back(mm);
               afegit = true;
 
-              // Expandim columnes a netejar amb la petjada del contenidor
               nat basej = (nat)ci.u.placa();
               nat ll = places_contenidor(ci.c);
 
@@ -390,10 +488,7 @@ void terminal::retira_contenidor(const string &m) {
     }
   }
 
-  // ------------------------------------------------------------
-  // 2) Moure a espera NOMÉS els "necessaris"
-  //    en ordre: accessible + ubicació mínima
-  // ------------------------------------------------------------
+  // 2) Moure a espera NOMÉS els necessaris en ordre accessible + ubicació mínima
   while (!necessaris.empty())
   {
     bool trobat = false;
@@ -410,7 +505,6 @@ void terminal::retira_contenidor(const string &m) {
       nat bk = (nat)ci.u.pis();
       nat ll = places_contenidor(ci.c);
 
-      // accessible = no hi ha res a sobre de cap de les seves places
       bool accessible = true;
       for (nat x = bj; x < bj + ll && accessible; ++x)
       {
@@ -431,7 +525,6 @@ void terminal::retira_contenidor(const string &m) {
         }
         else
         {
-          // Ubicació mínima (mateixa filera sempre)
           if (bj < millor_j || (bj == millor_j && bk < millor_k))
           {
             millor_mat = mm;
@@ -442,10 +535,8 @@ void terminal::retira_contenidor(const string &m) {
       }
     }
 
-    // Si per algun motiu no n’hi ha cap d’accessible, parem per evitar bucle infinit
     if (!trobat) break;
 
-    // Moure millor_mat a l’àrea d’espera
     info_cont ci = _idx[millor_mat];
     nat bj = (nat)ci.u.placa();
     nat bk = (nat)ci.u.pis();
@@ -458,7 +549,6 @@ void terminal::retira_contenidor(const string &m) {
     _idx.assig(millor_mat, info_cont(ci.c, true, ubicacio(-1, 0, 0)));
     _ops_grua++; // magatzem -> espera
 
-    // Eliminar de la llista "necessaris"
     for (list<string>::iterator it = necessaris.begin(); it != necessaris.end(); ++it)
     {
       if (*it == millor_mat)
@@ -471,18 +561,14 @@ void terminal::retira_contenidor(const string &m) {
 
   delete[] cal_netejar;
 
-  // ------------------------------------------------------------
   // 3) Retirar el target del magatzem
-  // ------------------------------------------------------------
   for (nat x = placa; x < placa + len_target; ++x)
     _mag[pos(fila, x, pis)] = "";
 
   _idx.elimina(m);
   _ops_grua++; // retirada directa del magatzem
 
-  // ------------------------------------------------------------
-  // 4) Recol·locar des de l’espera (FIRST_FIT + LIFO)
-  // ------------------------------------------------------------
+  // 4) Recol·locar des de l’espera (depèn d’estratègia)
   bool mogut = true;
   while (mogut)
   {
@@ -491,39 +577,67 @@ void terminal::retira_contenidor(const string &m) {
     list<contenidor>::iterator millor_it = _espera.end();
     ubicacio millor_u(0, 0, 0);
 
-    // Ens quedem amb l’últim de la llista que encaixa (LIFO)
-    for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
+    if (_st == estrategia::FIRST_FIT)
     {
-      nat llen = places_contenidor(*it);
-
-      bool ok = false;
-      ubicacio utry(0, 0, 0);
-
-      nat ii = 0;
-      while (ii < _n && !ok)
+      // FIRST_FIT: LIFO (últim que encaixa)
+      for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
       {
-        nat jj = 0;
-        while (jj < _m && !ok)
+        nat llen = places_contenidor(*it);
+
+        bool ok = false;
+        ubicacio utry(0, 0, 0);
+
+        nat ii = 0;
+        while (ii < _n && !ok)
         {
-          nat kk = 0;
-          while (kk < _h && !ok)
+          nat jj = 0;
+          while (jj < _m && !ok)
           {
-            if (pot_colocar(ii, jj, kk, llen))
+            nat kk = 0;
+            while (kk < _h && !ok)
             {
-              ok = true;
-              utry = ubicacio((int)ii, (int)jj, (int)kk);
+              if (pot_colocar(ii, jj, kk, llen))
+              {
+                ok = true;
+                utry = ubicacio((int)ii, (int)jj, (int)kk);
+              }
+              ++kk;
             }
-            ++kk;
+            ++jj;
           }
-          ++jj;
+          ++ii;
         }
-        ++ii;
-      }
 
-      if (ok)
+        if (ok)
+        {
+          millor_it = it;
+          millor_u = utry;
+        }
+      }
+    }
+    else
+    {
+      // LLIURE: millor encaix (score mínim)
+      bool trobat2 = false;
+      nat millor_score2 = 0;
+
+      for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
       {
-        millor_it = it;
-        millor_u = utry;
+        nat llen = places_contenidor(*it);
+        ubicacio utry(0,0,0);
+        nat score = 0;
+
+        bool ok = millor_ubicacio_lliure(llen, utry, score);
+        if (ok)
+        {
+          if (!trobat2 || score < millor_score2)
+          {
+            trobat2 = true;
+            millor_score2 = score;
+            millor_it = it;
+            millor_u = utry;
+          }
+        }
       }
     }
 
@@ -549,8 +663,7 @@ void terminal::retira_contenidor(const string &m) {
 }
 
 // ============================================================
-// FRAGMENTACIÓ (com als tests públics)
-// Comptem places (inici) on cap 10 però NO cap 20 ni 30.
+// FRAGMENTACIÓ (correcta: segments usables màxims de longitud 1)
 // ============================================================
 
 nat terminal::fragmentacio() const noexcept {
@@ -564,7 +677,6 @@ nat terminal::fragmentacio() const noexcept {
 
       while (j < _m)
       {
-        // Determinar si la plaça (i,j,k) és "usable" per un 10
         bool buida = (_mag[pos(i, j, k)] == "");
         bool suport = (k == 0) ? true : (_mag[pos(i, j, k - 1)] != "");
         bool usable = buida && suport;
@@ -575,10 +687,8 @@ nat terminal::fragmentacio() const noexcept {
         }
         else
         {
-          // Hem trobat l'inici d'un segment usable
           nat inici = j;
 
-          // Avancem fins que s'acabi el segment usable
           while (j < _m)
           {
             bool buida2 = (_mag[pos(i, j, k)] == "");
@@ -587,7 +697,7 @@ nat terminal::fragmentacio() const noexcept {
             ++j;
           }
 
-          nat llarg = j - inici;   // longitud del segment usable
+          nat llarg = j - inici;
           if (llarg == 1) ++frag;
         }
       }
