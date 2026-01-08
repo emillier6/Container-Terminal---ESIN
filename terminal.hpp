@@ -58,6 +58,11 @@ public:
   static constexpr int UbicacioNoMagatzem  = 46;
 
 private:
+  bool es_buit(nat i, nat j, nat k) const noexcept;
+  bool te_suport(nat i, nat j, nat k, nat len) const noexcept;
+  bool pot_colocar(nat i, nat j, nat k, nat len) const noexcept;
+  bool usable10(nat i, nat j, nat k) const noexcept;
+  bool troba_forat_lliure(nat len, ubicacio &u) const noexcept;
   #include "terminal.rep"
 };
 #endif

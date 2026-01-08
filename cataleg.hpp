@@ -9,50 +9,89 @@ using util::nat;
 
 template <typename Valor>
 class cataleg {
+  /*
+    Classe template cataleg<Valor>
+
+    Descripció:
+    Diccionari (clau -> valor) on la clau és un string i el valor és de tipus Valor.
+    Les operacions principals permeten inserir/actualitzar (assig), eliminar (elimina),
+    consultar existència (existeix) i obtenir el valor associat (operator[]).
+
+    Notes d'implementació:
+      - La representació i la justificació de disseny es documenten a cataleg.rep.
+      - La implementació i el contracte formal (Pre/Post i costos per mètode) es documenten a cataleg.t.
+      - Com que és una classe template, la implementació està inclosa al fitxer cataleg.t.
+
+    Gestió d'errors:
+      - ClauStringBuit (30): s'utilitza quan una operació no admet la clau buida "".
+      - ClauInexistent (31): s'utilitza quan es consulta/elimina una clau que no és al catàleg.
+  */
 public:
-  // Constructora. Crea un catàleg amb capacitat per a `numelems` claus.
-  // Pre: true
-  // Post: crea una estructura buida amb capacitat per `numelems` elements
+  /*
+    Constructora.
+    Crea un catàleg buit dimensionat a partir d'una estimació del nombre d'elements.
+    El paràmetre numelems serveix per ajustar la mida inicial de l'estructura.
+  */
   explicit cataleg(nat numelems);
 
-  // Constructora per còpia.
-  // Pre: true
-  // Post: el catàleg creat és una còpia exacta de `c` (deep copy)
+  /*
+    Constructora per còpia (còpia profunda).
+    El nou catàleg és independent de l'original (no comparteix memòria interna).
+  */
   cataleg(const cataleg& c);
 
-  // Assignació.
-  // Pre: true
-  // Post: el catàleg actual conté una còpia exacta de `c` i retorna referència a si mateix
+  /*
+    Operador d'assignació (còpia profunda).
+    Després de l'assignació, el p.i. conté les mateixes associacions que c.
+  */
   cataleg& operator=(const cataleg& c);
 
-  // Destructora.
-  // Pre: true
-  // Post: allibera tots els recursos associats al catàleg
+  /*
+    Destructora.
+    Allibera tota la memòria dinàmica associada al catàleg.
+  */
   ~cataleg() noexcept;
 
-  // Insereix o actualitza el valor associat a la clau `k`.
-  // Pre: true (la clau pot ser buida — en aquest cas es llença error `ClauStringBuit`)
-  // Post: si `k` és nova, l'element s'afegeix; si ja existia, el seu valor s'actualitza
+  /*
+    assig(k, v)
+    Insereix l'associació (k -> v) al catàleg. Si k ja existia, actualitza el seu valor a v.
+
+    Errors:
+      - ClauStringBuit si k == "".
+  */
   void assig(const string &k, const Valor &v);
 
-  // Elimina la clau `k` del catàleg.
-  // Pre: true (si `k` és buida es llença `ClauStringBuit`)
-  // Post: si `k` existia, queda eliminada; si no existia, es llença `ClauInexistent`
+  /*
+    elimina(k)
+    Elimina del catàleg l'associació corresponent a la clau k.
+
+    Errors:
+      - ClauInexistent si k no existeix al catàleg.
+  */
   void elimina(const string &k);
 
-  // Comprova si existeix la clau `k`.
-  // Pre: true
-  // Post: retorna `true` si existeix una associació per `k`, `false` en cas contrari
+  /*
+    existeix(k)
+    Retorna cert si la clau k existeix al catàleg, fals altrament.
+    Aquest mètode no genera errors.
+  */
   bool existeix(const string &k) const noexcept;
 
-  // Accés al valor associat a `k` (versió const).
-  // Pre: true (si `k` és buida es llença `ClauStringBuit`)
-  // Post: retorna el Valor associat a `k` si existeix; si no existeix es llença `ClauInexistent`
+  /*
+    operator[](k) (const)
+    Retorna el valor associat a la clau k.
+
+    Nota:
+      - Retorna una còpia del valor (segons l'especificació).
+    Errors:
+      - ClauInexistent si k no existeix al catàleg.
+  */
   Valor operator[](const string &k) const;
 
-  // Nombre d'elements emmagatzemats al catàleg.
-  // Pre: true
-  // Post: retorna el nombre d'associacions (clau, valor) actuals
+  /*
+    quants()
+    Retorna el nombre actual d'associacions (clau, valor) guardades al catàleg.
+  */
   nat quants() const noexcept;
 
   static constexpr int ClauStringBuit = 30;

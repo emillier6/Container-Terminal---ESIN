@@ -1,6 +1,28 @@
-// ------------------------------
-// Constructor
-// ------------------------------
+/*
+    -----------------------------------------------------------------------------
+    Implementació de cataleg<Valor> (taula hash amb chaining)
+    -----------------------------------------------------------------------------
+
+    Nota sobre costos:
+      - n = nombre d’elements (_quants)
+      - M = nombre de buckets (_M)
+      - α = factor de càrrega = n / M
+
+    Amb una funció hash “bona” i α controlat, el temps esperat de les operacions és O(1).
+    En el pitjor cas (totes les claus al mateix bucket) és O(n).
+*/
+
+/*
+    ------------------------------
+    Constructor
+    ------------------------------
+    Pre: true
+    Post: crea un catàleg buit amb _M = 2*numelems+1 (mínim 1) i totes les
+          posicions inicialitzades a nullptr; _quants=0.
+    Cost:
+      - Temps: Θ(M)
+      - Espai: Θ(M)
+*/
 template <typename Valor>
 cataleg<Valor>::cataleg(nat numelems) {
     _M = 2 * numelems + 1;     // mida recomanada
@@ -12,9 +34,16 @@ cataleg<Valor>::cataleg(nat numelems) {
     _quants = 0;
 }
 
-// ------------------------------
-// Constructor per còpia
-// ------------------------------
+/*
+    ------------------------------
+    Constructor per còpia (deep copy)
+    ------------------------------
+    Pre: true
+    Post: this és una còpia independent de c.
+    Cost:
+      - Temps: Θ(M + n)
+      - Espai: Θ(M + n)
+*/
 template <typename Valor>
 cataleg<Valor>::cataleg(const cataleg &c) {
     _M = c._M;
@@ -45,9 +74,16 @@ cataleg<Valor>::cataleg(const cataleg &c) {
     }
 }
 
-// ------------------------------
-// Assignació
-// ------------------------------
+/*
+    ------------------------------
+    Assignació
+    ------------------------------
+    Pre: true
+    Post: this conté una còpia independent de c i retorna *this.
+    Cost:
+      - Temps: Θ(M + n) per destruir + Θ(M + n) per copiar
+      - Espai addicional: O(1) (sense comptar la nova memòria reservada)
+*/
 template <typename Valor>
 cataleg<Valor>& cataleg<Valor>::operator=(const cataleg &c) {
     if (this != &c) {
@@ -90,9 +126,16 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg &c) {
     return *this;
 }
 
-// ------------------------------
-// Destructor
-// ------------------------------
+/*
+    ------------------------------
+    Destructor
+    ------------------------------
+    Pre: true
+    Post: memòria alliberada.
+    Cost:
+      - Temps: Θ(M + n)
+      - Espai: O(1) addicional
+*/
 template <typename Valor>
 cataleg<Valor>::~cataleg() noexcept {
     for (nat i = 0; i < _M; ++i) {
@@ -106,9 +149,19 @@ cataleg<Valor>::~cataleg() noexcept {
     delete[] _taula;
 }
 
-// ------------------------------
-// Inserció / Actualització
-// ------------------------------
+/*
+    ------------------------------
+    assig: inserir/actualitzar
+    ------------------------------
+    Pre: true
+    Post:
+      - si k=="" -> error(ClauStringBuit)
+      - si k existia -> actualitza valor
+      - si k no existia -> insereix node nou i incrementa _quants
+    Cost esperat:
+      - Temps: O(1) mitjà; O(n) pitjor
+      - Espai: O(1) per inserció (1 node)
+*/
 template <typename Valor>
 void cataleg<Valor>::assig(const string &k, const Valor &v) {
     if (k == "") throw error(ClauStringBuit);
@@ -132,9 +185,18 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) {
     ++_quants;
 }
 
-// ------------------------------
-// Eliminació
-// ------------------------------
+/*
+    ------------------------------
+    elimina
+    ------------------------------
+    Pre: true
+    Post:
+      - si k no existeix -> error(ClauInexistent)
+      - si existeix -> elimina el node i decrementa _quants
+    Cost esperat:
+      - Temps: O(1) mitjà; O(n) pitjor
+      - Espai: O(1)
+*/
 template <typename Valor>
 void cataleg<Valor>::elimina(const string &k) {
     nat pos = hash(k);
@@ -160,9 +222,16 @@ void cataleg<Valor>::elimina(const string &k) {
     throw error(ClauInexistent);
 }
 
-// ------------------------------
-// Existeix?
-// ------------------------------
+/*
+    ------------------------------
+    existeix?
+    ------------------------------
+    Pre: true
+    Post: retorna true si k és al catàleg, false en cas contrari.
+    Cost esperat:
+      - Temps: O(1) mitjà; O(n) pitjor
+      - Espai: O(1)
+*/
 template <typename Valor>
 bool cataleg<Valor>::existeix(const string &k) const noexcept {
     nat pos = hash(k);
@@ -175,9 +244,18 @@ bool cataleg<Valor>::existeix(const string &k) const noexcept {
     return false;
 }
 
-// ------------------------------
-// Accés per clau
-// ------------------------------
+/*
+    ------------------------------
+    Acces per clau
+    ------------------------------
+    Pre: true
+    Post:
+      - si k existeix -> retorna una còpia del Valor associat
+      - si no existeix -> error(ClauInexistent)
+    Cost esperat:
+      - Temps: O(1) mitjà; O(n) pitjor
+      - Espai: O(1) (retorn per còpia)
+*/
 template <typename Valor>
 Valor cataleg<Valor>::operator[](const string &k) const {
     nat pos = hash(k);
@@ -191,9 +269,14 @@ Valor cataleg<Valor>::operator[](const string &k) const {
     throw error(ClauInexistent);
 }
 
-// ------------------------------
-// Comptador
-// ------------------------------
+/*
+    ------------------------------
+    Contador
+    ------------------------------
+    Pre: true
+    Post: retorna _quants.
+    Cost: Θ(1)
+*/
 template <typename Valor>
 nat cataleg<Valor>::quants() const noexcept {
     return _quants;

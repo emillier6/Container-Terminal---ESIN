@@ -1,19 +1,46 @@
+/*
+  Representació de la classe contenidor
+  -----------------------------------
+
+  Un contenidor es caracteritza per:
+    - una matrícula (string)
+    - una longitud (nat) en peus, amb valors admesos {10, 20, 30}.
+
+  Elecció de representació
+  ------------------------
+  - Matrícula: es representa amb std::string perquè:
+      * l'enunciat ho indica explícitament,
+      * permet longitud variable,
+      * facilita comparacions alfabètiques (necessàries pels operadors).
+    Alternativa considerada: array de char de mida fixa.
+      * Pro: cost constant per còpia si la mida fos petita i fixa.
+      * Contra: l'enunciat NO limita la longitud de la matrícula; imposar mida fixa
+        obligaria a gestionar truncaments o errors addicionals.
+
+  - Longitud: es representa amb nat (enter positiu) perquè:
+      * l'enunciat fixa que és un enter positiu,
+      * les operacions són simples (comparació i retorn).
+    Alternativa considerada: enum {L10, L20, L30}.
+      * Pro: només valors vàlids.
+      * Contra: complica interoperabilitat amb l'enunciat i amb el driver (que parla en peus).
+
+  Propietat invariant (condició de consistència)
+  ---------------------------------------------
+  En tot instant, un objecte contenidor ha de complir:
+    (1) _matricula no és buida
+    (2) cada caràcter de _matricula és lletra 'A'..'Z' o dígit '0'..'9'
+    (3) _longitud ∈ {10, 20, 30}
+
+  Impacte en costos
+  -----------------
+  - Espai: O(|matricula|) per la string + O(1) per la longitud.
+  - Validació de matrícula (constructora): O(|matricula|) temps.
+
+  Nota
+  ----
+  Aquesta classe NO usa memòria dinàmica pròpia (més enllà de la gestionada per std::string),
+  per tant les operacions de còpia/assignació/destrucció són les habituals.
+*/
+
 string _matricula;      // Matrícula del contenedor
 nat _longitud;          // Longitud del contenedor
-
-// Coste n·long(n)
-// Pre: true
-// Post: fusiona las partes ordenadas del string s de manera ordenada
-static void merge(string& s, int left, int mid, int right);
-
-// Coste constante
-// Pre: true
-// Post: left y right indican los límites izquierdo y derecho 
-// de la partición del string s respectivamente
-static void mergeSort(string& s, int left, int right);
-
-// Coste n·log(n)
-// Pre: true
-// Post: devuelve un string que contiene los caracteres de merge
-// en orden alfabético
-static string sort(const string& m);

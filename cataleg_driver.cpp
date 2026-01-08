@@ -68,7 +68,7 @@ static string normalize_key(string k) {
 // Imprimeix error exactament com volen els JP: Error::<modul>:<codi>:<missatge>
 static void print_error_as_jp(const error& e,
                              const unordered_map<int, ErrInfo>& table) {
-  int code = e.codigo();   // ✅ libesin: codigo()
+  int code = e.codigo();
 
   auto it = table.find(code);
   if (it != table.end()) {

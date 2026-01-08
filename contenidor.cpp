@@ -1,141 +1,229 @@
 #include "contenidor.hpp"
 
-contenidor::contenidor(const string &m, nat l){
-    bool error1 = false, error2 = false;
+/*
+  Pre:
+    cert.
 
-    if(m.length() > 0){
-        int i = 0, n = m.length();
-        while(i < n and not error1){
-            // INV: los caracteres de 0 a i-1 de s pertenecen a ('A' - 'Z') o a ('0' - '9')
-            if(not ((m[i] >= 'A' and m[i] <= 'Z') or (m[i] >= '0' and m[i] <= '9'))){
-                error1 = true;
-            }
-            ++i;
-        }
+  Post:
+    Crea un contenidor amb matrícula m i longitud l.
+    - Genera error MatriculaIncorrecta si:
+        * m és la cadena buida, o
+        * algun caràcter de m no és lletra majúscula ('A'..'Z') ni dígit ('0'..'9').
+    - Genera error LongitudIncorrecta si l ∉ {10, 20, 30}.
+    Si no hi ha errors, el p.i. queda amb _matricula = m i _longitud = l.
 
-        if(l != 10 and l != 20 and l != 30){
-            error2 = true;
-        }
-        
-    }else{
-        error1 = true;
+  Cost:
+    Temps: O(|m|) per validar la matrícula (recorregut complet en el pitjor cas).
+    Espai: O(1) addicional (sense comptar la memòria interna gestionada per std::string).
+*/
+contenidor::contenidor(const string &m, nat l)
+{
+  //Validació de la matrícula
+  if (m.empty())
+  {
+    throw error(MatriculaIncorrecta);
+  }
+
+  for (char c : m)
+  {
+    if (!((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')))
+    {
+      throw error(MatriculaIncorrecta);
     }
+  }
 
-    if(error1){
-        throw error(MatriculaIncorrecta, "contenidor", "Matricula incorrecta.");
-    }else if(error2){
-        throw error(LongitudIncorrecta, "contenidor", "Longitud incorrecta.");
-    }else{
-        _matricula = m;
-        _longitud = l;
-    }
+  //Validació de la longitud
+  if (l != 10 && l != 20 && l != 30)
+  {
+    throw error(LongitudIncorrecta);
+  }
+  //Assignació dels atributs
+  _matricula = m;
+  _longitud = l;
 }
 
-contenidor::contenidor(const contenidor &u){
-    _matricula = u._matricula;
-    _longitud = u._longitud;
+/*
+  Pre:
+    cert.
+
+  Post:
+    El p.i. es crea com una còpia exacta de u (mateixa matrícula i longitud).
+
+  Cost:
+    Temps: O(|u._matricula|) per copiar la cadena.
+    Espai: O(|u._matricula|) (espai per a la còpia de l'string).
+*/
+contenidor::contenidor(const contenidor &u)
+{
+  _matricula = u._matricula;
+  _longitud = u._longitud;
 }
 
-contenidor &contenidor::operator=(const contenidor &u){
-    _matricula = u._matricula;
-    _longitud = u._longitud;
-    return *this;
+/*
+  Pre:
+    cert.
+
+  Post:
+    El p.i. passa a tenir els mateixos valors que u.
+    Retorna una referència al p.i.
+
+  Cost:
+    Temps: O(|u._matricula|) (còpia d'string).
+    Espai: O(|u._matricula|) (pot implicar reallocació de la memòria interna de l'string).
+*/
+contenidor &contenidor::operator=(const contenidor &u)
+{
+  _matricula = u._matricula;
+  _longitud = u._longitud;
+  return *this;
 }
 
-contenidor::~contenidor() noexcept{
+/*
+  Pre:
+    cert.
 
+  Post:
+    Destrueix el p.i. i allibera els recursos interns (gestionats per std::string).
+
+  Cost:
+    Temps: O(1).
+    Espai: O(1).
+*/
+contenidor::~contenidor() noexcept
+{
 }
 
-nat contenidor::longitud() const noexcept{
-    return _longitud;
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna la longitud del contenidor.
+
+  Cost:
+    Temps: O(1).
+    Espai: O(1).
+*/
+nat contenidor::longitud() const noexcept
+{
+  return _longitud;
 }
 
-string contenidor::matricula() const noexcept{
-    return _matricula;
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna la matrícula del contenidor.
+    Nota: com que es retorna per valor, es crea una còpia de l'string.
+
+  Cost:
+    Temps: O(|_matricula|).
+    Espai: O(|_matricula|) (còpia del retorn).
+*/
+string contenidor::matricula() const noexcept
+{
+  return _matricula;
 }
 
-bool contenidor::operator==(const contenidor &c) const noexcept{
-    return (_matricula == c._matricula and _longitud == c._longitud);
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna cert si la matrícula i la longitud del p.i. coincideixen amb les de c.
+
+  Cost:
+    Temps: O(min(|m1|, |m2|)) per comparar strings (pitjor cas O(|m|)).
+    Espai: O(1).
+*/
+bool contenidor::operator==(const contenidor &c) const noexcept
+{
+  return (_matricula == c._matricula and _longitud == c._longitud);
 }
 
-bool contenidor::operator!=(const contenidor &c) const noexcept{
-    return not(*this == c);
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna cert si el p.i. i c són diferents.
+
+  Cost:
+    Temps: O(min(|m1|, |m2|)) (delegat a operator==).
+    Espai: O(1).
+*/
+bool contenidor::operator!=(const contenidor &c) const noexcept
+{
+  return not(*this == c);
 }
 
-bool contenidor::operator<(const contenidor &c) const noexcept{
-    string m1 = sort(_matricula), m2 = sort(c._matricula);
-    return m1 < m2 or (m1 == m2 and _longitud < c._longitud);
+/*
+  Pre:
+    cert.
+
+  Post:
+    Defineix un ordre total segons l'enunciat:
+      - primer es compara la matrícula en ordre alfabètic,
+      - si les matrícules coincideixen, es compara la longitud.
+
+    Retorna cert si el p.i. és estrictament menor que c segons aquest ordre.
+
+  Cost:
+    Temps: O(min(|m1|, |m2|)) per comparar matrícules + O(1) per longitud.
+    Espai: O(1).
+*/
+bool contenidor::operator<(const contenidor &c) const noexcept
+{
+  if (_matricula != c._matricula)
+    return _matricula < c._matricula;
+  return _longitud < c._longitud;
 }
 
-bool contenidor::operator<=(const contenidor &c) const noexcept{
-    string m1 = sort(_matricula), m2 = sort(c._matricula);
-    return m1 < m2 or (m1 == m2 and _longitud <= c._longitud);
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna cert si el p.i. és menor o igual que c segons l'ordre definit.
+
+  Cost:
+    Temps: O(min(|m1|, |m2|)) (fa servir operator< i operator==).
+    Espai: O(1).
+*/
+bool contenidor::operator<=(const contenidor &c) const noexcept
+{
+  return (*this < c) || (*this == c);
 }
 
-bool contenidor::operator>(const contenidor &c) const noexcept{
-    string m1 = sort(_matricula), m2 = sort(c._matricula);
-    return m1 > m2 or (m1 == m2 and _longitud > c._longitud);
+/*
+  Pre:
+    cert.
+
+  Post:
+    Retorna cert si el p.i. és estrictament major que c segons l'ordre definit.
+
+  Cost:
+    Temps: O(min(|m1|, |m2|)) (delegat a operator<).
+    Espai: O(1).
+*/
+bool contenidor::operator>(const contenidor &c) const noexcept
+{
+  return c < *this;
 }
 
-bool contenidor::operator>=(const contenidor &c) const noexcept{
-    string m1 = sort(_matricula), m2 = sort(c._matricula);
-    return m1 > m2 or (m1 == m2 and _longitud >= c._longitud);
-}
+/*
+  Pre:
+    cert.
 
-//Métodos privados
+  Post:
+    Retorna cert si el p.i. és major o igual que c segons l'ordre definit.
 
-void contenidor::merge(string &s, int left, int mid, int right){
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
-
-    string L = "";
-    string R = "";
-
-    for(int i = 0; i < n1; ++i){
-        L[i] = s[left+i];
-    }
-    for(int j = 0; j < n2; ++j){
-        R[j] = s[mid +1 + j];
-    }
-
-    int i = 0, j = 0;
-    int k = left;
-
-    while(i < n1 and j < n2){
-        if(L[i] <= R[j]){
-            s[k] = L[i];
-            ++i;
-        }else{
-            s[k] = R[j];
-            ++j;
-        }
-        ++k;
-    }
-
-    while(i < n1){
-        s[k] = L[i];
-        ++i;
-        ++k;
-    }
-
-    while(j < n2){
-        s[k] = R[j];
-        ++j;
-        ++k;
-    }
-}
-
-void contenidor::mergeSort(string &s, int left, int right){
-    if(left < right){
-        int mid = left + (right -left) / 2;
-        mergeSort(s, left, mid);
-        mergeSort(s, mid + 1, right);
-        merge(s, left, mid, right);
-    }
-}
-
-string contenidor::sort(const string& m){
-    string r = m;
-    mergeSort(r, 0, r.length()-1);
-    return r;
+  Cost:
+    Temps: O(min(|m1|, |m2|)) (fa servir operator> i operator==).
+    Espai: O(1).
+*/
+bool contenidor::operator>=(const contenidor &c) const noexcept
+{
+  return (*this > c) || (*this == c);
 }

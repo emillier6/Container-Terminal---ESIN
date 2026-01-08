@@ -1,13 +1,43 @@
+/*
+  Representació de la classe ubicacio
+
+  S'ha escollit representar una ubicació mitjançant tres enters:
+    - _filera
+    - _placa
+    - _pis
+
+  Aquesta representació és directa i correspon exactament a la definició
+  matemàtica d'ubicació donada a l'enunciat (<i, j, k>).
+
+  Alternatives considerades:
+    - Representar la ubicació amb una estructura o classe auxiliar:
+        Rebutjat perquè afegiria sobrecost en memòria i complexitat
+        sense aportar cap benefici funcional.
+    - Codificar la ubicació en un únic enter:
+        Rebutjat perquè dificultaria la lectura del codi, les comparacions
+        i la validació de les ubicacions especials.
+
+  Justificació de l'opció escollida:
+    - Cost en espai: O(1), tres enters.
+    - Cost en temps: totes les operacions bàsiques (constructora,
+      consultors, comparacions) són O(1).
+    - Simplicitat i claredat del codi.
+    - Facilita la definició, necessari
+      per complir els requisits de l'enunciat (p. ex. retirada de contenidors).
+
+  Propietats de la representació:
+    Sempre es compleix exactament una de les condicions següents:
+      (1) _filera >= 0, _placa >= 0 i _pis >= 0
+          ubicació vàlida dins l'àrea d'emmagatzematge.
+      (2) _filera == -1, _placa == 0 i _pis == 0
+          ubicació a l'àrea d'espera.
+      (3) _filera == -1, _placa == -1 i _pis == -1
+          ubicació inexistent.
+
+  Aquestes propietats es garanteix per la constructora i preservat per
+  totes les operacions de la classe.
+*/
+
 int _filera;
 int _placa;
 int _pis;
-
-//coste constante
-//pre: true
-//post: devuelve true en el caso de que i, j y k sean iguales a -1 (corrresponde a que el contenedor no está en la terminal)
-static bool fora_terminal(int i, int j, int k);
-
-//coste constante
-//pre: true
-//post: devuelve true en el caso de que i == -1 y j y k igual a 0 (corresponde a que el contenedor está en la zona de espera)
-static bool a_espera(int i, int j, int k);

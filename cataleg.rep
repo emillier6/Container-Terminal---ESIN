@@ -1,32 +1,85 @@
-// Representació del catàleg utilitzant sinònims encadenats indirectes
-// (separate chaining), segons les estructures del Tema 6 d’ESIN.
+/*
+    -----------------------------------------------------------------------------
+    Representació: Taula de dispersió amb sinònims encadenats INDIRECTES
+    -----------------------------------------------------------------------------
+    Estructura de dades escollida:
+      - Dispersió oberta (open hashing) amb llistes encadenades.
+      - Cada posició de la taula (_taula[i]) apunta al cap d’una llista de nodes.
+      - Cada node guarda (clau, valor) i un punter al següent node.
+
+    Justificació (respecte alternatives dels apunts):
+        (1) Sinònims encadenats INDIRECTES:
+          + Inserció/eliminació senzilles (només manipular punters).
+          + No cal gestionar marques d’esborrat (a diferència de sondeig).
+          + Rendiment mitjà O(1) si la funció hash distribueix bé.
+          - Overhead de punters (memòria extra per node).
+        (2) Sinònims encadenats DIRECTES:
+          + Pot reduir nombre d’allocacions, però complica molt la representació.
+          - Més delicat d’implementar i gestionar.
+        (3) Sondeig lineal:
+          + Memòria compacta (sense punters).
+          - Problema de “primary clustering”, empitjora amb molta ocupació.
+          - Eliminació requereix marques (esborrat), i pot degradar consultes.
+    En aquest projecte (cataleg genèric), l’opció indirecta és la més robusta i simple,
+    i dona cost esperat O(1) amb bona dispersió.
+    -----------------------------------------------------------------------------
+    Propietats de representació (condicions internes que sempre han de ser certes)
+    -----------------------------------------------------------------------------
+    P1) _M > 0.
+    P2) _taula apunta a un array de _M punters (node_hash*).
+    P3) Per tot i: 0 <= i < _M, _taula[i] és nullptr o el cap d’una llista ben formada.
+    P4) No hi ha cap clau repetida en tot el catàleg.
+    P5) _quants és el nombre total de nodes sumant totes les llistes.
+    P6) Per tot node de bucket i: hash(node->_k) == i.
+    -----------------------------------------------------------------------------
+    Node de la llista de sinònims
+    -----------------------------------------------------------------------------
+*/
 
 struct node_hash {
-    string _k;          // clau
+    string _k;          // clau (no buida perquè assig ho impedeix)
     Valor  _v;          // valor associat
     node_hash* _seg;    // següent node de la llista
 
-    // Constructor del node
+    // Cost: Θ(1) temps, Θ(1) espai
     node_hash(const string &k, const Valor &v, node_hash* seg = nullptr)
         : _k(k), _v(v), _seg(seg) {}
 };
-
-// Atributs privats de la classe cataleg<Valor>
+/*
+    -----------------------------------------------------------------------------
+    Atributs privats
+    -----------------------------------------------------------------------------
+*/
 node_hash** _taula;     // vector de punters a llistes encadenades
 nat _M;                 // mida de la taula
 nat _quants;            // nombre d’elements inserits al catàleg
 
+// Constant per la funció hash (variant basada en multiplicació/PI).
+// Nota: MULT es fa servir com a “constant de barreja” per reduir patrons.
 static unsigned long const MULT = 31415926;
 
-// Funció de dispersió (hash) — mètode privat
+/*
+    -----------------------------------------------------------------------------
+    Funció de dispersió (hash)
+    -----------------------------------------------------------------------------
+    Objectiu:
+      Donada una clau string, produir un enter [0, _M-1] distribuït “prou” uniformement.
+    Estratègia:
+      1) Hash polinòmic base 131: recorre els caràcters i acumula
+           h = h * 131 + c
+         Això té en compte l’ordre dels caràcters (AX.. != XA..).
+      2) Barreja addicional (quadrat + MULT) per reduir col·lisions sistemàtiques.
+      3) Reducció mòdul _M.
+    Cost:
+      - Temps: Θ(|k|)
+      - Espai: O(1)
+*/
 nat hash(const string &k) const noexcept {
-    // Hash polinòmic previ
+    
     unsigned long h = 0;
-    //Equivalent:
-    //for (int i = 0; i < k.size(); ++i)
+
     for (char c : k) h = h * 131 + c;
 
-    // Mètode del quadrat mitjà amb constat PI
     unsigned long h2 = ((h * h * MULT) << 20) >> 4;
 
     return h2 % _M;
