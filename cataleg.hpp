@@ -10,8 +10,10 @@ using util::nat;
 template <typename Valor>
 class cataleg {
   /*
+    -----------------------------------------------------------------------------
     Classe template cataleg<Valor>
-
+    -----------------------------------------------------------------------------
+    
     Descripció:
     Diccionari (clau -> valor) on la clau és un string i el valor és de tipus Valor.
     Les operacions principals permeten inserir/actualitzar (assig), eliminar (elimina),

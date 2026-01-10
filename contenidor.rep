@@ -42,5 +42,5 @@
   per tant les operacions de còpia/assignació/destrucció són les habituals.
 */
 
-string _matricula;      // Matrícula del contenedor
-nat _longitud;          // Longitud del contenedor
+string _matricula;      // Matrícula del contenidor
+nat _longitud;          // Longitud del contenidor

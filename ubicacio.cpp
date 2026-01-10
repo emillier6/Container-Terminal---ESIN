@@ -1,7 +1,6 @@
 #include "ubicacio.hpp"
 
 #include <esin/error>
-using namespace std;
 
 /*
   Pre:

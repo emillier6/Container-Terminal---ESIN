@@ -1,40 +1,314 @@
-// Dimensions i configuració
+/*
+    -----------------------------------------------------------------------------
+    Representació: Terminal de contenidors (magatzem + índex + àrea d’espera)
+    -----------------------------------------------------------------------------
+
+    Un terminal gestiona contenidors identificats per matrícula, ubicats:
+      - al magatzem (estructura 3D: filera, placa, pis), o bé
+      - a l’àrea d’espera (llista de contenidors pendents de recol·locació).
+
+    Decisió de representació principal:
+      (1) Magatzem com a array 3D “aplanat” en un vector 1D de strings:
+            _mag[pos(i,j,k)] = matrícula o "" si és buit
+          on:
+            i = filera   (0.._n-1)
+            j = placa    (0.._m-1)
+            k = pis      (0.._h-1)
+
+          Justificació:
+            + Accés i actualització Θ(1) per cel·la (posició concreta).
+            + Memòria compacta (un sol bloc).
+            + Senzill d’inicialitzar i copiar.
+            - Requereix una funció pos(i,j,k) per indexar correctament.
+
+      (2) Índex de matrícula -> informació del contenidor:
+            _idx[matricula] = info_cont{ contenidor, en_espera?, ubicacio }
+          Justificació:
+            + Permet consultar on és un contenidor en temps esperat O(1) (hash).
+            + Evita recórrer tot el magatzem per trobar un contenidor.
+            - Cal mantenir coherència entre _idx i _mag/_espera a cada operació.
+
+      (3) Àrea d’espera:
+            _espera : list<contenidor>
+          Justificació:
+            + Única estructura de la STL permesa, segons enunciat, per representar
+              l’àrea d’espera i per implementar area_espera.
+            + Permet afegir al final i iterar per recol·locar.
+
+    -----------------------------------------------------------------------------
+    Propietats de representació (invariants)
+    -----------------------------------------------------------------------------
+    Sigui T = _n * _m * _h.
+
+    P1) _n > 0, _m > 0, 0 < _h <= HMAX.
+    P2) _mag != nullptr i apunta a un array de T strings.
+    P3) Per tota cel·la (i,j,k), _mag[pos(i,j,k)] és "" o bé una matrícula existent a _idx.
+    P4) Cada matrícula m present a _idx compleix exactament una d’aquestes condicions:
+        - (a) _idx[m].en_espera == true  i el contenidor és a _espera, i la ubicació guardada
+              és ubicacio(-1,0,0) (convenció d’àrea d’espera).
+        - (b) _idx[m].en_espera == false i la ubicació guardada és una ubicació de magatzem
+              vàlida (filera, placa, pis). Si len = places_contenidor(_idx[m].c),
+              aleshores per a tot x amb placa <= x < placa + len es compleix:
+                  _mag[pos(filera, x, pis)] == m
+              i, a més, aquestes cel·les són les úniques ocupades per la matrícula m.
+    P5) No hi ha cap matrícula duplicada: _idx és un diccionari (clau única).
+    P6) _ops_grua compta el nombre de moviments “físics”:
+        - magatzem -> espera
+        - espera -> magatzem
+        - retirada directa del magatzem
+        Inserir a l’àrea d’espera no incrementa _ops_grua.
+
+    -----------------------------------------------------------------------------
+    Notes sobre costos globals (paràmetres)
+    -----------------------------------------------------------------------------
+    - n = _n (fileres), m = _m (places per filera), h = _h (pisos), T = n*m*h.
+    - Operacions que escanegen el magatzem poden tenir cost Θ(T).
+    - Consultes via _idx tenen cost esperat O(1) (amb possible pitjor cas O(k)).
+*/
+
+
+// -----------------------------------------------------------------------------
+// Dimensions i configuració del terminal
+// -----------------------------------------------------------------------------
 nat _n;                 // nombre de fileres
 nat _m;                 // nombre de places per filera
 nat _h;                 // alçada màxima d'apilament
-estrategia _st;         // estratègia d'inserció/retirada
+estrategia _st;         // estratègia d'inserció/retirada (FIRST_FIT o LLIURE)
 
+// -----------------------------------------------------------------------------
 // Comptador d'operacions de grua
+// -----------------------------------------------------------------------------
 nat _ops_grua;
 
-// ------------------------------
+// -----------------------------------------------------------------------------
 // Magatzem (àrea d'emmagatzematge)
-//
-// Representació en un sol bloc:
-// _mag[pos(i,j,k)] = matrícula (string) o "" si buit.
-// ------------------------------
+// _mag és un array 1D de mida _n*_m*_h:
+//   - "" si buit
+//   - matrícula si ocupat
+// -----------------------------------------------------------------------------
 string* _mag;
 
-// Accés a l'índex del bloc 1D
+/*
+    ------------------------------
+    pos(i,j,k)
+    ------------------------------
+    Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
+    Post: retorna l'índex dins de _mag corresponent a (i,j,k)
+    Cost: Θ(1)
+*/
 inline nat pos(nat i, nat j, nat k) const noexcept {
   return (i * _m + j) * _h + k;
 }
 
-// ------------------------------
-// Índex per matrícula
-// ------------------------------
+// -----------------------------------------------------------------------------
+// Informació associada a una matrícula a l'índex _idx
+// -----------------------------------------------------------------------------
 struct info_cont {
   contenidor c;
   bool en_espera;
   ubicacio u;
 
+  // Cost: Θ(1) temps, Θ(1) espai
   info_cont(const contenidor& cc, bool ee, const ubicacio& uu)
     : c(cc), en_espera(ee), u(uu) {}
 };
 
+// Índex matrícula -> info_cont (diccionari hash amb cost esperat O(1))
 cataleg<info_cont> _idx;
 
-// ------------------------------
-// Àrea d'espera
-// ------------------------------
+// -----------------------------------------------------------------------------
+// Àrea d'espera: única estructura STL permesa (segons enunciat)
+// -----------------------------------------------------------------------------
 list<contenidor> _espera;
+
+/*
+    ------------------------------
+    es_buit(i,j,k)
+    ------------------------------
+    Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
+    Post: retorna cert si la cel·la (i,j,k) del magatzem és buida.
+    Cost: Θ(1)
+*/
+bool es_buit(nat i, nat j, nat k) const noexcept {
+  return _mag[pos(i, j, k)] == "";
+}
+
+/*
+    ------------------------------
+    te_suport(i,j,k,len)
+    ------------------------------
+    Pre:
+      - 0<=i<_n, 0<=j<_m, 0<=k<_h
+      - 1<=len<=3 i j+len<=_m
+    Post:
+      - si k==0 retorna cert (terra)
+      - si k>0 retorna cert ssi totes les cel·les sota el segment [j..j+len-1]
+        a (i,*,k-1) són ocupades (no buides).
+    Cost:
+      - Temps: Θ(len)
+      - Espai: Θ(1)
+*/
+bool te_suport(nat i, nat j, nat k, nat len) const noexcept {
+  bool ok = true;
+  if (k != 0)
+  {
+    nat x = j;
+    while (x < j + len and ok)
+    {
+      if (es_buit(i, x, k - 1)) ok = false;
+      ++x;
+    }
+  }
+  return ok;
+}
+
+/*
+    ------------------------------
+    pot_colocar(i,j,k,len)
+    ------------------------------
+    Pre:
+      - 0<=i<_n, 0<=j<_m, 0<=k<_h
+      - 1<=len<=3
+    Post:
+      Retorna cert ssi:
+        (1) el segment [j..j+len-1] cap dins la filera (j+len<=_m),
+        (2) totes les cel·les (i,x,k) del segment són buides,
+        (3) el segment té suport (te_suport).
+    Cost:
+      - Temps: Θ(len)
+      - Espai: Θ(1)
+*/
+bool pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
+  bool ok = (j + len <= _m);
+  if (ok)
+  {
+    nat x = j;
+    while (x < j + len and ok)
+    {
+      if (!es_buit(i, x, k)) ok = false;
+      ++x;
+    }
+  }
+  if (ok) ok = te_suport(i, j, k, len);
+  return ok;
+}
+
+/*
+    ------------------------------
+    lloc_usable10(i,j,k)
+    ------------------------------
+    Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
+    Post: retorna cert si la plaça (i,j,k) és usable per a un contenidor de 10:
+          és buida i té suport (k==0 o cel·la inferior ocupada).
+    Cost: Θ(1)
+*/
+bool lloc_usable10(nat i, nat j, nat k) const noexcept
+{
+  bool ok = es_buit(i, j, k);
+  if (ok)
+  {
+    if (k != 0) ok = !es_buit(i, j, k - 1);
+  }
+  return ok;
+}
+
+/*
+    ------------------------------
+    millor_ubicacio_lliure(len, u, puntuacio)
+    ------------------------------
+    Pre: 1<=len<=3.
+    Post:
+      Cerca una ubicació del magatzem on es pugui col·locar un contenidor de longitud len
+      segons l'estratègia BEST_FIT:
+        - es consideren segments "usables" (plenes de suport i buides),
+        - es tria la col·locació que minimitza la puntuació:
+            puntuació = penalització_forats_1 * 1000 + sobrant_total
+          on la penalització és gran si es deixa un forat de mida 1 a esquerra o dreta.
+      Si existeix, retorna cert i assigna u i puntuacio; altrament retorna fals.
+    Cost:
+      - Temps: O(_n * _h * _m * _m * len) en el pitjor cas (recorregut + prova posicions).
+        (Amb len acotat per 3, és O(_n * _h * _m^2).)
+      - Espai: Θ(1)
+*/
+bool millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) const noexcept
+{
+  bool trobat = false;
+
+  nat millor_i = 0, millor_j = 0, millor_k = 0;
+  nat millor_puntuacio = 0;
+
+  for (nat i = 0; i < _n; ++i)
+  {
+    for (nat k = 0; k < _h; ++k)
+    {
+      nat j = 0;
+      while (j < _m)
+      {
+        bool usable_inici = lloc_usable10(i, j, k);
+
+        if (!usable_inici)
+        {
+          ++j;
+        }
+        else
+        {
+          // Segment usable [ini..fi]
+          nat ini = j;
+          while (j < _m and lloc_usable10(i, j, k)) ++j;
+          nat fi = j - 1;
+
+          nat mida_forat = fi - ini + 1;
+
+          if (mida_forat >= len)
+          {
+            // Provar totes les posicions dins el forat
+            for (nat p = ini; p + len - 1 <= fi; ++p)
+            {
+              bool ok_colocar = pot_colocar(i, p, k, len);
+              if (ok_colocar)
+              {
+                nat sobrant_esq = p - ini;
+                nat sobrant_dreta = fi - (p + len - 1);
+                nat sobrant = sobrant_esq + sobrant_dreta;
+
+                // Penalització forta si deixem un forat d'1
+                nat penal = 0;
+                if (sobrant_esq == 1) penal += 100;
+                if (sobrant_dreta == 1) penal += 100;
+
+                nat score = penal * 1000 + sobrant;
+
+                bool millor = false;
+                if (!trobat) millor = true;
+                else if (score < millor_puntuacio) millor = true;
+                else if (score == millor_puntuacio)
+                {
+                  // desempat simple i estable
+                  if (i < millor_i) millor = true;
+                  else if (i == millor_i and p < millor_j) millor = true;
+                  else if (i == millor_i and p == millor_j and k < millor_k) millor = true;
+                }
+
+                if (millor)
+                {
+                  trobat = true;
+                  millor_puntuacio = score;
+                  millor_i = i; millor_j = p; millor_k = k;
+                }
+              }
+            }
+          }
+
+        }
+      }
+    }
+  }
+
+  bool resultat = trobat;
+  if (resultat)
+  {
+    u = ubicacio((int)millor_i, (int)millor_j, (int)millor_k);
+    puntuacio = millor_puntuacio;
+  }
+  return resultat;
+}

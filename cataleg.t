@@ -5,11 +5,11 @@
 
     Nota sobre costos:
       - n = nombre d’elements (_quants)
-      - M = nombre de buckets (_M)
+      - M = mida de la taula (_M)
       - α = factor de càrrega = n / M
 
-    Amb una funció hash “bona” i α controlat, el temps esperat de les operacions és O(1).
-    En el pitjor cas (totes les claus al mateix bucket) és O(n).
+    Amb una funció hash “bona” i α controlat (mitjançant redispersió), el temps esperat
+    de les operacions és O(1). En el pitjor cas (moltes col·lisions o redispersió) és O(n).
 */
 
 /*
@@ -158,9 +158,16 @@ cataleg<Valor>::~cataleg() noexcept {
       - si k=="" -> error(ClauStringBuit)
       - si k existia -> actualitza valor
       - si k no existia -> insereix node nou i incrementa _quants
-    Cost esperat:
-      - Temps: O(1) mitjà; O(n) pitjor
-      - Espai: O(1) per inserció (1 node)
+    Cost:
+      - Millor cas: Θ(1) (actualització immediata o inserció sense col·lisions).
+      - Cas mitjà (esperat): O(1), assumint una funció hash “bona” i α controlat.
+      - Pitjor cas:
+          * O(k) per cercar/actualitzar/inserir dins de la llista, on k és la longitud de
+            la llista de sinònims (O(n) en el pitjor cas).
+          * Θ(n) quan es fa redispersió (es recol·loquen tots els elements).
+      - Espai:
+          * Θ(1) per inserció (1 node) si no hi ha redispersió.
+          * Θ(nou_M) addicional temporal quan es fa redispersió (array de llistes).
 */
 template <typename Valor>
 void cataleg<Valor>::assig(const string &k, const Valor &v) {
@@ -177,12 +184,21 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) {
         if (p->_k == k) {
             p->_v = v;   // actualització
             actualitzat = true;
+        }else{
+            p = p->_seg;
         }
-        p = p->_seg;
     }
 
     if (!actualitzat)
     {
+        double alfa = (_quants + 1) * 1.0 / _M;
+
+        // Redispersió: llindar de càrrega (si es vol unificar, usar ALFA_MAX)
+        if (alfa > 1.0) {
+            redispersa(2 * _M + 1);
+            pos = hash(k);   // recalcular amb el nou _M
+        }
+
         // Inserir al principi de la llista
         node_hash *nou = new node_hash(k, v, _taula[pos]);
         _taula[pos] = nou;
@@ -199,7 +215,8 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) {
       - si k no existeix -> error(ClauInexistent)
       - si existeix -> elimina el node i decrementa _quants
     Cost esperat:
-      - Temps: O(1) mitjà; O(n) pitjor
+      - Cas mitjà (esperat): O(1) si α es manté controlat.
+      - Pitjor cas: O(k), on k és la longitud de la llista (O(n) en el pitjor cas).
       - Espai: O(1)
 */
 template <typename Valor>
@@ -238,7 +255,8 @@ void cataleg<Valor>::elimina(const string &k) {
     Pre: true
     Post: retorna true si k és al catàleg, false en cas contrari.
     Cost esperat:
-      - Temps: O(1) mitjà; O(n) pitjor
+      - Cas mitjà (esperat): O(1) si α es manté controlat.
+      - Pitjor cas: O(k), on k és la longitud de la llista (O(n) en el pitjor cas).
       - Espai: O(1)
 */
 template <typename Valor>
@@ -263,7 +281,8 @@ bool cataleg<Valor>::existeix(const string &k) const noexcept {
       - si k existeix -> retorna una còpia del Valor associat
       - si no existeix -> error(ClauInexistent)
     Cost esperat:
-      - Temps: O(1) mitjà; O(n) pitjor
+      - Cas mitjà (esperat): O(1) si α es manté controlat.
+      - Pitjor cas: O(k), on k és la longitud de la llista (O(n) en el pitjor cas).
       - Espai: O(1) (retorn per còpia)
 */
 template <typename Valor>

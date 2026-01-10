@@ -22,6 +22,9 @@
           - Eliminació requereix marques (esborrat), i pot degradar consultes.
     En aquest projecte (cataleg genèric), l’opció indirecta és la més robusta i simple,
     i dona cost esperat O(1) amb bona dispersió.
+    A més, aquesta representació permet emmagatzemar més elements que el màxim indicat
+    al constructor (les llistes poden créixer). Per tal de mantenir el rendiment esperat
+    O(1), s’ha incorporat redispersió (rehash) quan el factor de càrrega α és massa alt.
     -----------------------------------------------------------------------------
     Propietats de representació (condicions internes que sempre han de ser certes)
     -----------------------------------------------------------------------------
@@ -30,7 +33,8 @@
     P3) Per tot i: 0 <= i < _M, _taula[i] és nullptr o el cap d’una llista ben formada.
     P4) No hi ha cap clau repetida en tot el catàleg.
     P5) _quants és el nombre total de nodes sumant totes les llistes.
-    P6) Per tot node de bucket i: hash(node->_k) == i.
+    P6) En tot moment, per tot node de i, hash(node->_k) (amb el valor actual de _M)
+        retorna i.
     -----------------------------------------------------------------------------
     Node de la llista de sinònims
     -----------------------------------------------------------------------------
@@ -83,4 +87,64 @@ nat hash(const string &k) const noexcept {
     unsigned long h2 = ((h * h * MULT) << 20) >> 4;
 
     return h2 % _M;
+}
+
+/*
+    -----------------------------------------------------------------------------
+    Control del factor de càrrega
+    -----------------------------------------------------------------------------
+    Definim α = _quants / _M. Quan α és massa alt, el nombre de col·lisions esperat creix
+    i les operacions poden degradar-se. Per controlar-ho, fem redispersió (rehash) quan
+    l’operació d’inserció faria superar un llindar ALFA_MAX.
+*/
+static constexpr double ALFA_MAX = 1.0;   // llindar de factor de càrrega (ajustable)
+
+/*
+    -----------------------------------------------------------------------------
+    Redispersió (rehash)
+    -----------------------------------------------------------------------------
+    Objectiu:
+      - Redimensionar la taula i recol·locar tots els elements per reduir col·lisions.
+    Estratègia:
+      1) Crear una nova taula de mida nou_M inicialitzada a nullptr.
+      2) Guardar la taula antiga i la mida antiga.
+      3) Actualitzar _taula i _M (a partir d’aquest moment hash() empra la mida nova).
+      4) Recol·locar tots els nodes re-enllaçant punters (no es creen nodes nous).
+      5) Alliberar l’array de llistes antic.
+    Cost:
+      - Temps: Θ(n + M_antiga) (es recorre tota la taula i tots els nodes).
+      - Espai: Θ(nou_M) (array de llistes nou).
+*/
+void redispersa(nat nou_M){
+    node_hash **nova_taula = new node_hash*[nou_M];
+
+    for (nat i = 0; i < nou_M; ++i) {
+        nova_taula[i] = nullptr;
+    }
+
+    // Guardem l'antiga
+    node_hash **taula_antiga = _taula;
+    nat M_antiga = _M;
+
+    // Actualitzem mida i taula
+    _taula = nova_taula;
+    _M = nou_M;
+
+    // Recol·locar tots els nodes
+    for (nat i = 0; i < M_antiga; ++i) {
+        node_hash *p = taula_antiga[i];
+
+        while (p != nullptr) {
+            node_hash *seg = p->_seg;
+
+            nat idx = hash(p->_k);   // usa el NOU _M
+            p->_seg = _taula[idx];
+            _taula[idx] = p;
+
+            p = seg;
+        }
+        taula_antiga[i] = nullptr;
+    }
+
+    delete[] taula_antiga;
 }

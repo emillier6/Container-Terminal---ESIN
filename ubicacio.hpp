@@ -6,7 +6,10 @@
 
 class ubicacio {
 /*
-  Classe: ubicacio
+  -----------------------------------------------------------------------------
+  Classe ubicacio
+  -----------------------------------------------------------------------------
+  
   Ofereix una abstracció d'una ubicació dins la terminal de contenidors.
   Les operacions permeten:
     - crear ubicacions vàlides,
