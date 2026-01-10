@@ -175,9 +175,13 @@ bool contenidor::operator!=(const contenidor &c) const noexcept
 */
 bool contenidor::operator<(const contenidor &c) const noexcept
 {
-  if (_matricula != c._matricula)
-    return _matricula < c._matricula;
-  return _longitud < c._longitud;
+  bool resultat = false;
+  if (_matricula != c._matricula) {
+    resultat = (_matricula < c._matricula);
+  } else {
+    resultat = (_longitud < c._longitud);
+  }
+  return resultat;
 }
 
 /*

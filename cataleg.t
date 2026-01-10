@@ -170,19 +170,24 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) {
 
     node_hash *p = _taula[pos];
 
+    bool actualitzat = false;
+
     // Buscar si ja existeix
-    while (p != nullptr) {
+    while (p != nullptr && !actualitzat) {
         if (p->_k == k) {
             p->_v = v;   // actualització
-            return;
+            actualitzat = true;
         }
         p = p->_seg;
     }
 
-    // Inserir al principi de la llista
-    node_hash *nou = new node_hash(k, v, _taula[pos]);
-    _taula[pos] = nou;
-    ++_quants;
+    if (!actualitzat)
+    {
+        // Inserir al principi de la llista
+        node_hash *nou = new node_hash(k, v, _taula[pos]);
+        _taula[pos] = nou;
+        ++_quants;
+    }
 }
 
 /*
@@ -203,7 +208,8 @@ void cataleg<Valor>::elimina(const string &k) {
     node_hash *p = _taula[pos];
     node_hash *ant = nullptr;
 
-    while (p != nullptr) {
+    bool eliminat = false;
+    while (p != nullptr && !eliminat) {
         if (p->_k == k) {
             // eliminar node
             if (ant == nullptr) {
@@ -213,13 +219,16 @@ void cataleg<Valor>::elimina(const string &k) {
             }
             delete p;
             --_quants;
-            return;
+            eliminat = true;
         }
-        ant = p;
-        p = p->_seg;
+        if (!eliminat)
+        {
+            ant = p;
+            p = p->_seg;
+        }
     }
 
-    throw error(ClauInexistent);
+    if (!eliminat) throw error(ClauInexistent);
 }
 
 /*
@@ -237,11 +246,12 @@ bool cataleg<Valor>::existeix(const string &k) const noexcept {
     nat pos = hash(k);
     node_hash *p = _taula[pos];
 
-    while (p != nullptr) {
-        if (p->_k == k) return true;
+    bool trobat = false;
+    while (p != nullptr && !trobat) {
+        if (p->_k == k) trobat = true;
         p = p->_seg;
     }
-    return false;
+    return trobat;
 }
 
 /*
@@ -261,12 +271,23 @@ Valor cataleg<Valor>::operator[](const string &k) const {
     nat pos = hash(k);
     node_hash *p = _taula[pos];
 
-    while (p != nullptr) {
-        if (p->_k == k) return p->_v;
-        p = p->_seg;
+    bool trobat = false;
+    node_hash *q = nullptr;
+
+    while (p != nullptr && !trobat) {
+        if (p->_k == k) {
+            trobat = true;
+            q = p;
+        } else {
+            p = p->_seg;
+        }
     }
 
-    throw error(ClauInexistent);
+    if (!trobat) {
+        throw error(ClauInexistent);
+    }
+
+    return q->_v;
 }
 
 /*

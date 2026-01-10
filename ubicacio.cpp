@@ -166,9 +166,15 @@ bool ubicacio::operator!=(const ubicacio &u) const noexcept{
     Espai: O(1)
 */
 bool ubicacio::operator<(const ubicacio &u) const noexcept{
-    if (_filera != u._filera) return _filera < u._filera;
-    if (_placa  != u._placa)  return _placa  < u._placa;
-    return _pis < u._pis;
+    bool resultat = false;
+    if (_filera != u._filera) {
+        resultat = (_filera < u._filera);
+    } else if (_placa != u._placa) {
+        resultat = (_placa < u._placa);
+    } else {
+        resultat = (_pis < u._pis);
+    }
+    return resultat;
 }
 
 /*

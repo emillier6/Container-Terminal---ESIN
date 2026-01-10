@@ -16,11 +16,14 @@ static nat places_contenidor(const contenidor &c) noexcept {
 // ------------------------------------------------------------
 static bool esta_a_llista(const list<string> &L, const string &x) noexcept
 {
-  for (list<string>::const_iterator it = L.begin(); it != L.end(); ++it)
+  bool trobat = false;
+  list<string>::const_iterator it = L.begin();
+  while (it != L.end() && !trobat)
   {
-    if (*it == x) return true;
+    if (*it == x) trobat = true;
+    ++it;
   }
-  return false;
+  return trobat;
 }
 
 bool terminal::es_buit(nat i, nat j, nat k) const noexcept {
@@ -28,34 +31,44 @@ bool terminal::es_buit(nat i, nat j, nat k) const noexcept {
 }
 
 bool terminal::te_suport(nat i, nat j, nat k, nat len) const noexcept {
-  if (k == 0) return true;
-
-  nat x = j;
-  while (x < j + len) {
-    if (es_buit(i, x, k - 1)) return false;
-    ++x;
+  bool ok = true;
+  if (k != 0)
+  {
+    nat x = j;
+    while (x < j + len && ok)
+    {
+      if (es_buit(i, x, k - 1)) ok = false;
+      ++x;
+    }
   }
-  return true;
+  return ok;
 }
 
 bool terminal::pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
-  if (j + len > _m) return false;
-
-  nat x = j;
-  while (x < j + len) {
-    if (!es_buit(i, x, k)) return false;
-    ++x;
+  bool ok = (j + len <= _m);
+  if (ok)
+  {
+    nat x = j;
+    while (x < j + len && ok)
+    {
+      if (!es_buit(i, x, k)) ok = false;
+      ++x;
+    }
   }
-  return te_suport(i, j, k, len);
+  if (ok) ok = te_suport(i, j, k, len);
+  return ok;
 }
 
 // --- Helpers per LLIURE ---
 // Una plaça és usable per un 10 si està buida i (k==0) o té suport
 bool terminal::lloc_usable10(nat i, nat j, nat k) const noexcept
 {
-  if (!es_buit(i, j, k)) return false;
-  if (k == 0) return true;
-  return !es_buit(i, j, k - 1);
+  bool ok = es_buit(i, j, k);
+  if (ok)
+  {
+    if (k != 0) ok = !es_buit(i, j, k - 1);
+  }
+  return ok;
 }
 
 // BEST_FIT + penalitza deixar forats de mida 1
@@ -73,63 +86,73 @@ bool terminal::millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) cons
       nat j = 0;
       while (j < _m)
       {
-        if (!lloc_usable10(i, j, k))
+        bool usable_inici = lloc_usable10(i, j, k);
+
+        if (!usable_inici)
         {
           ++j;
-          continue;
         }
-
-        // Segment usable [ini..fi]
-        nat ini = j;
-        while (j < _m && lloc_usable10(i, j, k)) ++j;
-        nat fi = j - 1;
-
-        nat mida_forat = fi - ini + 1;
-        if (mida_forat < len) continue;
-
-        // Provar totes les posicions dins el forat
-        for (nat p = ini; p + len - 1 <= fi; ++p)
+        else
         {
-          if (!pot_colocar(i, p, k, len)) continue;
+          // Segment usable [ini..fi]
+          nat ini = j;
+          while (j < _m && lloc_usable10(i, j, k)) ++j;
+          nat fi = j - 1;
 
-          nat sobrant_esq = p - ini;
-          nat sobrant_dreta = fi - (p + len - 1);
-          nat sobrant = sobrant_esq + sobrant_dreta;
+          nat mida_forat = fi - ini + 1;
 
-          // Penalització forta si deixem un forat d'1
-          nat penal = 0;
-          if (sobrant_esq == 1) penal += 100;
-          if (sobrant_dreta == 1) penal += 100;
-
-          nat score = penal * 1000 + sobrant;
-
-          bool millor = false;
-          if (!trobat) millor = true;
-          else if (score < millor_puntuacio) millor = true;
-          else if (score == millor_puntuacio)
+          if (mida_forat >= len)
           {
-            // desempat simple i estable
-            if (i < millor_i) millor = true;
-            else if (i == millor_i && p < millor_j) millor = true;
-            else if (i == millor_i && p == millor_j && k < millor_k) millor = true;
+            // Provar totes les posicions dins el forat
+            for (nat p = ini; p + len - 1 <= fi; ++p)
+            {
+              bool ok_colocar = pot_colocar(i, p, k, len);
+              if (ok_colocar)
+              {
+                nat sobrant_esq = p - ini;
+                nat sobrant_dreta = fi - (p + len - 1);
+                nat sobrant = sobrant_esq + sobrant_dreta;
+
+                // Penalització forta si deixem un forat d'1
+                nat penal = 0;
+                if (sobrant_esq == 1) penal += 100;
+                if (sobrant_dreta == 1) penal += 100;
+
+                nat score = penal * 1000 + sobrant;
+
+                bool millor = false;
+                if (!trobat) millor = true;
+                else if (score < millor_puntuacio) millor = true;
+                else if (score == millor_puntuacio)
+                {
+                  // desempat simple i estable
+                  if (i < millor_i) millor = true;
+                  else if (i == millor_i && p < millor_j) millor = true;
+                  else if (i == millor_i && p == millor_j && k < millor_k) millor = true;
+                }
+
+                if (millor)
+                {
+                  trobat = true;
+                  millor_puntuacio = score;
+                  millor_i = i; millor_j = p; millor_k = k;
+                }
+              }
+            }
           }
 
-          if (millor)
-          {
-            trobat = true;
-            millor_puntuacio = score;
-            millor_i = i; millor_j = p; millor_k = k;
-          }
         }
       }
     }
   }
 
-  if (!trobat) return false;
-
-  u = ubicacio((int)millor_i, (int)millor_j, (int)millor_k);
-  puntuacio = millor_puntuacio;
-  return true;
+  bool resultat = trobat;
+  if (resultat)
+  {
+    u = ubicacio((int)millor_i, (int)millor_j, (int)millor_k);
+    puntuacio = millor_puntuacio;
+  }
+  return resultat;
 }
 
 // ============================================================
@@ -178,27 +201,30 @@ terminal::terminal(const terminal &b)
 }
 
 terminal &terminal::operator=(const terminal &b) {
-  if (this == &b) return *this;
+  bool mateix = (this == &b);
 
-  nat total = b._n * b._m * b._h;
-  string *nou_mag = new string[total];
+  if (!mateix)
+  {
+    nat total = b._n * b._m * b._h;
+    string *nou_mag = new string[total];
 
-  nat p = 0;
-  while (p < total) {
-    nou_mag[p] = b._mag[p];
-    ++p;
+    nat p = 0;
+    while (p < total) {
+      nou_mag[p] = b._mag[p];
+      ++p;
+    }
+
+    delete[] _mag;
+    _mag = nou_mag;
+
+    _n = b._n;
+    _m = b._m;
+    _h = b._h;
+    _st = b._st;
+    _ops_grua = b._ops_grua;
+    _idx = b._idx;
+    _espera = b._espera;
   }
-
-  delete[] _mag;
-  _mag = nou_mag;
-
-  _n = b._n;
-  _m = b._m;
-  _h = b._h;
-  _st = b._st;
-  _ops_grua = b._ops_grua;
-  _idx = b._idx;
-  _espera = b._espera;
 
   return *this;
 }
@@ -223,12 +249,14 @@ nat terminal::ops_grua() const noexcept { return _ops_grua; }
 // ============================================================
 
 ubicacio terminal::on(const string &m) const noexcept {
-  if (!_idx.existeix(m)) return ubicacio(-1, -1, -1);
-
-  info_cont info = _idx[m];
-  if (info.en_espera) return ubicacio(-1, 0, 0);
-
-  return info.u;
+  ubicacio u(-1, -1, -1);
+  if (_idx.existeix(m))
+  {
+    info_cont info = _idx[m];
+    if (info.en_espera) u = ubicacio(-1, 0, 0);
+    else u = info.u;
+  }
+  return u;
 }
 
 nat terminal::longitud(const string &m) const {
@@ -422,21 +450,23 @@ void terminal::retira_contenidor(const string &m) {
   info_cont target = _idx[m];
 
   // 0) Si és a l’àrea d’espera: eliminar immediatament (0 grua)
-  if (target.en_espera)
+  bool es_a_espera = target.en_espera;
+  if (es_a_espera)
   {
-    for (list<contenidor>::iterator it = _espera.begin(); it != _espera.end(); ++it)
+    bool trobat_it = false;
+    list<contenidor>::iterator it = _espera.begin();
+    while (it != _espera.end() && !trobat_it)
     {
-      if (it->matricula() == m)
-      {
-        _espera.erase(it);
-        break;
-      }
+      if (it->matricula() == m) trobat_it = true;
+      else ++it;
     }
+    if (trobat_it) _espera.erase(it);
     _idx.elimina(m);
-    return;
   }
 
   // Target és al magatzem
+  if (!es_a_espera)
+  {
   nat fila = (nat)target.u.filera();
   nat placa = (nat)target.u.placa();
   nat pis = (nat)target.u.pis();
@@ -461,10 +491,11 @@ void terminal::retira_contenidor(const string &m) {
     {
       for (nat j = 0; j < _m; ++j)
       {
-        if (!cal_netejar[j]) continue;
-
+        if (cal_netejar[j])
+        {
         const string &mm = _mag[pos(fila, j, k)];
-        if (mm == "") continue;
+        if (mm != "")
+        {
 
         if (_idx.existeix(mm))
         {
@@ -484,12 +515,15 @@ void terminal::retira_contenidor(const string &m) {
             }
           }
         }
+        }
+        }
       }
     }
   }
 
   // 2) Moure a espera NOMÉS els necessaris en ordre accessible + ubicació mínima
-  while (!necessaris.empty())
+  bool segueix = true;
+  while (!necessaris.empty() && segueix)
   {
     bool trobat = false;
     string millor_mat = "";
@@ -535,12 +569,14 @@ void terminal::retira_contenidor(const string &m) {
       }
     }
 
-    if (!trobat) break;
+    if (!trobat) segueix = false;
 
-    info_cont ci = _idx[millor_mat];
-    nat bj = (nat)ci.u.placa();
-    nat bk = (nat)ci.u.pis();
-    nat ll = places_contenidor(ci.c);
+    if (trobat)
+    {
+      info_cont ci = _idx[millor_mat];
+      nat bj = (nat)ci.u.placa();
+      nat bk = (nat)ci.u.pis();
+      nat ll = places_contenidor(ci.c);
 
     for (nat x = bj; x < bj + ll; ++x)
       _mag[pos(fila, x, bk)] = "";
@@ -549,13 +585,14 @@ void terminal::retira_contenidor(const string &m) {
     _idx.assig(millor_mat, info_cont(ci.c, true, ubicacio(-1, 0, 0)));
     _ops_grua++; // magatzem -> espera
 
-    for (list<string>::iterator it = necessaris.begin(); it != necessaris.end(); ++it)
-    {
-      if (*it == millor_mat)
+      bool esborra = false;
+      list<string>::iterator it = necessaris.begin();
+      while (it != necessaris.end() && !esborra)
       {
-        necessaris.erase(it);
-        break;
+        if (*it == millor_mat) esborra = true;
+        else ++it;
       }
+      if (esborra) necessaris.erase(it);
     }
   }
 
@@ -660,6 +697,7 @@ void terminal::retira_contenidor(const string &m) {
       mogut = true;
     }
   }
+  }
 }
 
 // ============================================================
@@ -689,12 +727,13 @@ nat terminal::fragmentacio() const noexcept {
         {
           nat inici = j;
 
-          while (j < _m)
+          bool segueix = true;
+          while (j < _m && segueix)
           {
             bool buida2 = (_mag[pos(i, j, k)] == "");
             bool suport2 = (k == 0) ? true : (_mag[pos(i, j, k - 1)] != "");
-            if (!(buida2 && suport2)) break;
-            ++j;
+            if (buida2 && suport2) ++j;
+            else segueix = false;
           }
 
           nat llarg = j - inici;
