@@ -173,7 +173,7 @@ void cataleg<Valor>::assig(const string &k, const Valor &v) {
     bool actualitzat = false;
 
     // Buscar si ja existeix
-    while (p != nullptr && !actualitzat) {
+    while (p != nullptr and !actualitzat) {
         if (p->_k == k) {
             p->_v = v;   // actualització
             actualitzat = true;
@@ -209,7 +209,7 @@ void cataleg<Valor>::elimina(const string &k) {
     node_hash *ant = nullptr;
 
     bool eliminat = false;
-    while (p != nullptr && !eliminat) {
+    while (p != nullptr and !eliminat) {
         if (p->_k == k) {
             // eliminar node
             if (ant == nullptr) {
@@ -247,7 +247,7 @@ bool cataleg<Valor>::existeix(const string &k) const noexcept {
     node_hash *p = _taula[pos];
 
     bool trobat = false;
-    while (p != nullptr && !trobat) {
+    while (p != nullptr and !trobat) {
         if (p->_k == k) trobat = true;
         p = p->_seg;
     }
@@ -274,7 +274,7 @@ Valor cataleg<Valor>::operator[](const string &k) const {
     bool trobat = false;
     node_hash *q = nullptr;
 
-    while (p != nullptr && !trobat) {
+    while (p != nullptr and !trobat) {
         if (p->_k == k) {
             trobat = true;
             q = p;

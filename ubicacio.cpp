@@ -190,7 +190,7 @@ bool ubicacio::operator<(const ubicacio &u) const noexcept{
     Espai: O(1)
 */
 bool ubicacio::operator<=(const ubicacio &u) const noexcept{
-    return (*this < u) || (*this == u);
+    return (*this < u) or (*this == u);
 }
 
 /*
@@ -222,5 +222,5 @@ bool ubicacio::operator>(const ubicacio &u) const noexcept{
     Espai: O(1)
 */
 bool ubicacio::operator>=(const ubicacio &u) const noexcept{
-    return (*this > u) || (*this == u);
+    return (*this > u) or (*this == u);
 }

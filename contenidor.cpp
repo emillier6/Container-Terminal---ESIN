@@ -26,14 +26,14 @@ contenidor::contenidor(const string &m, nat l)
 
   for (char c : m)
   {
-    if (!((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')))
+    if (!((c >= 'A' and c <= 'Z') or (c >= '0' and c <= '9')))
     {
       throw error(MatriculaIncorrecta);
     }
   }
 
   //Validació de la longitud
-  if (l != 10 && l != 20 && l != 30)
+  if (l != 10 and l != 20 and l != 30)
   {
     throw error(LongitudIncorrecta);
   }
@@ -197,7 +197,7 @@ bool contenidor::operator<(const contenidor &c) const noexcept
 */
 bool contenidor::operator<=(const contenidor &c) const noexcept
 {
-  return (*this < c) || (*this == c);
+  return (*this < c) or (*this == c);
 }
 
 /*
@@ -229,5 +229,5 @@ bool contenidor::operator>(const contenidor &c) const noexcept
 */
 bool contenidor::operator>=(const contenidor &c) const noexcept
 {
-  return (*this > c) || (*this == c);
+  return (*this > c) or (*this == c);
 }

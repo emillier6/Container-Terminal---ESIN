@@ -18,7 +18,7 @@ static bool esta_a_llista(const list<string> &L, const string &x) noexcept
 {
   bool trobat = false;
   list<string>::const_iterator it = L.begin();
-  while (it != L.end() && !trobat)
+  while (it != L.end() and !trobat)
   {
     if (*it == x) trobat = true;
     ++it;
@@ -35,7 +35,7 @@ bool terminal::te_suport(nat i, nat j, nat k, nat len) const noexcept {
   if (k != 0)
   {
     nat x = j;
-    while (x < j + len && ok)
+    while (x < j + len and ok)
     {
       if (es_buit(i, x, k - 1)) ok = false;
       ++x;
@@ -49,7 +49,7 @@ bool terminal::pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
   if (ok)
   {
     nat x = j;
-    while (x < j + len && ok)
+    while (x < j + len and ok)
     {
       if (!es_buit(i, x, k)) ok = false;
       ++x;
@@ -96,7 +96,7 @@ bool terminal::millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) cons
         {
           // Segment usable [ini..fi]
           nat ini = j;
-          while (j < _m && lloc_usable10(i, j, k)) ++j;
+          while (j < _m and lloc_usable10(i, j, k)) ++j;
           nat fi = j - 1;
 
           nat mida_forat = fi - ini + 1;
@@ -127,8 +127,8 @@ bool terminal::millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) cons
                 {
                   // desempat simple i estable
                   if (i < millor_i) millor = true;
-                  else if (i == millor_i && p < millor_j) millor = true;
-                  else if (i == millor_i && p == millor_j && k < millor_k) millor = true;
+                  else if (i == millor_i and p < millor_j) millor = true;
+                  else if (i == millor_i and p == millor_j and k < millor_k) millor = true;
                 }
 
                 if (millor)
@@ -163,14 +163,14 @@ terminal::terminal(nat n, nat m, nat h, estrategia st)
   : _n(n), _m(m), _h(h), _st(st),
     _ops_grua(0),
     _mag(nullptr),
-    _idx((n == 0 || m == 0 || h == 0) ? 1 : (2 * n * m * h + 1)),
+    _idx((n == 0 or m == 0 or h == 0) ? 1 : (2 * n * m * h + 1)),
     _espera()
 {
   if (_n == 0) throw error(NumFileresIncorr);
   if (_m == 0) throw error(NumPlacesIncorr);
-  if (_h == 0 || _h > HMAX) throw error(AlcadaMaxIncorr);
+  if (_h == 0 or _h > HMAX) throw error(AlcadaMaxIncorr);
 
-  if (!(_st == estrategia::FIRST_FIT || _st == estrategia::LLIURE))
+  if (!(_st == estrategia::FIRST_FIT or _st == estrategia::LLIURE))
     throw error(EstrategiaIncorr);
 
   nat total = _n * _m * _h;
@@ -273,7 +273,7 @@ void terminal::contenidor_ocupa(const ubicacio &u, string &m) const {
   int j = u.placa();
   int k = u.pis();
 
-  if (i < 0 || j < 0 || k < 0 || i >= (int)_n || j >= (int)_m || k >= (int)_h)
+  if (i < 0 or j < 0 or k < 0 or i >= (int)_n or j >= (int)_m or k >= (int)_h)
     throw error(UbicacioNoMagatzem);
 
   m = _mag[pos((nat)i, (nat)j, (nat)k)];
@@ -308,11 +308,11 @@ void terminal::insereix_contenidor(const contenidor &c) {
   {
     // Recorregut filera -> placa -> pis
     nat i = 0;
-    while (i < _n && !col_locat) {
+    while (i < _n and !col_locat) {
       nat j = 0;
-      while (j < _m && !col_locat) {
+      while (j < _m and !col_locat) {
         nat k = 0;
-        while (k < _h && !col_locat) {
+        while (k < _h and !col_locat) {
           if (pot_colocar(i, j, k, len)) {
             col_locat = true;
             u = ubicacio((int)i, (int)j, (int)k);
@@ -362,11 +362,11 @@ void terminal::insereix_contenidor(const contenidor &c) {
           nat llen = places_contenidor(*it);
 
           nat ii = 0;
-          while (ii < _n && !ok) {
+          while (ii < _n and !ok) {
             nat jj = 0;
-            while (jj < _m && !ok) {
+            while (jj < _m and !ok) {
               nat kk = 0;
-              while (kk < _h && !ok) {
+              while (kk < _h and !ok) {
                 if (pot_colocar(ii, jj, kk, llen)) {
                   ok = true;
                   utry = ubicacio((int)ii, (int)jj, (int)kk);
@@ -399,7 +399,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
           bool ok = millor_ubicacio_lliure(llen, utry, score);
           if (ok)
           {
-            if (!trobat || score < millor_score)
+            if (!trobat or score < millor_score)
             {
               trobat = true;
               millor_score = score;
@@ -455,7 +455,7 @@ void terminal::retira_contenidor(const string &m) {
   {
     bool trobat_it = false;
     list<contenidor>::iterator it = _espera.begin();
-    while (it != _espera.end() && !trobat_it)
+    while (it != _espera.end() and !trobat_it)
     {
       if (it->matricula() == m) trobat_it = true;
       else ++it;
@@ -523,7 +523,7 @@ void terminal::retira_contenidor(const string &m) {
 
   // 2) Moure a espera NOMÉS els necessaris en ordre accessible + ubicació mínima
   bool segueix = true;
-  while (!necessaris.empty() && segueix)
+  while (!necessaris.empty() and segueix)
   {
     bool trobat = false;
     string millor_mat = "";
@@ -540,9 +540,9 @@ void terminal::retira_contenidor(const string &m) {
       nat ll = places_contenidor(ci.c);
 
       bool accessible = true;
-      for (nat x = bj; x < bj + ll && accessible; ++x)
+      for (nat x = bj; x < bj + ll and accessible; ++x)
       {
-        for (nat z = bk + 1; z < _h && accessible; ++z)
+        for (nat z = bk + 1; z < _h and accessible; ++z)
         {
           if (!es_buit(fila, x, z)) accessible = false;
         }
@@ -559,7 +559,7 @@ void terminal::retira_contenidor(const string &m) {
         }
         else
         {
-          if (bj < millor_j || (bj == millor_j && bk < millor_k))
+          if (bj < millor_j or (bj == millor_j and bk < millor_k))
           {
             millor_mat = mm;
             millor_j = bj;
@@ -587,7 +587,7 @@ void terminal::retira_contenidor(const string &m) {
 
       bool esborra = false;
       list<string>::iterator it = necessaris.begin();
-      while (it != necessaris.end() && !esborra)
+      while (it != necessaris.end() and !esborra)
       {
         if (*it == millor_mat) esborra = true;
         else ++it;
@@ -625,13 +625,13 @@ void terminal::retira_contenidor(const string &m) {
         ubicacio utry(0, 0, 0);
 
         nat ii = 0;
-        while (ii < _n && !ok)
+        while (ii < _n and !ok)
         {
           nat jj = 0;
-          while (jj < _m && !ok)
+          while (jj < _m and !ok)
           {
             nat kk = 0;
-            while (kk < _h && !ok)
+            while (kk < _h and !ok)
             {
               if (pot_colocar(ii, jj, kk, llen))
               {
@@ -667,7 +667,7 @@ void terminal::retira_contenidor(const string &m) {
         bool ok = millor_ubicacio_lliure(llen, utry, score);
         if (ok)
         {
-          if (!trobat2 || score < millor_score2)
+          if (!trobat2 or score < millor_score2)
           {
             trobat2 = true;
             millor_score2 = score;
@@ -717,7 +717,7 @@ nat terminal::fragmentacio() const noexcept {
       {
         bool buida = (_mag[pos(i, j, k)] == "");
         bool suport = (k == 0) ? true : (_mag[pos(i, j, k - 1)] != "");
-        bool usable = buida && suport;
+        bool usable = buida and suport;
 
         if (!usable)
         {
@@ -728,11 +728,11 @@ nat terminal::fragmentacio() const noexcept {
           nat inici = j;
 
           bool segueix = true;
-          while (j < _m && segueix)
+          while (j < _m and segueix)
           {
             bool buida2 = (_mag[pos(i, j, k)] == "");
             bool suport2 = (k == 0) ? true : (_mag[pos(i, j, k - 1)] != "");
-            if (buida2 && suport2) ++j;
+            if (buida2 and suport2) ++j;
             else segueix = false;
           }
 
