@@ -16,7 +16,7 @@
             k = pis      (0.._h-1)
 
           Justificació:
-            + Accés i actualització Θ(1) per cel·la (posició concreta).
+            + Accés i actualització O(1) per cel·la (posició concreta).
             + Memòria compacta (un sol bloc).
             + Senzill d’inicialitzar i copiar.
             - Requereix una funció pos(i,j,k) per indexar correctament.
@@ -62,7 +62,7 @@
     Notes sobre costos globals (paràmetres)
     -----------------------------------------------------------------------------
     - n = _n (fileres), m = _m (places per filera), h = _h (pisos), T = n*m*h.
-    - Operacions que escanegen el magatzem poden tenir cost Θ(T).
+    - Operacions que escanegen el magatzem poden tenir cost O(T).
     - Consultes via _idx tenen cost esperat O(1) (amb possible pitjor cas O(k)).
 */
 
@@ -94,7 +94,7 @@ string* _mag;
     ------------------------------
     Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
     Post: retorna l'índex dins de _mag corresponent a (i,j,k)
-    Cost: Θ(1)
+    Cost: O(1)
 */
 inline nat pos(nat i, nat j, nat k) const noexcept {
   return (i * _m + j) * _h + k;
@@ -108,7 +108,7 @@ struct info_cont {
   bool en_espera;
   ubicacio u;
 
-  // Cost: Θ(1) temps, Θ(1) espai
+  // Cost: O(1) temps, O(1) espai
   info_cont(const contenidor& cc, bool ee, const ubicacio& uu)
     : c(cc), en_espera(ee), u(uu) {}
 };
@@ -127,7 +127,7 @@ list<contenidor> _espera;
     ------------------------------
     Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
     Post: retorna cert si la cel·la (i,j,k) del magatzem és buida.
-    Cost: Θ(1)
+    Cost: O(1)
 */
 bool es_buit(nat i, nat j, nat k) const noexcept {
   return _mag[pos(i, j, k)] == "";
@@ -145,8 +145,8 @@ bool es_buit(nat i, nat j, nat k) const noexcept {
       - si k>0 retorna cert ssi totes les cel·les sota el segment [j..j+len-1]
         a (i,*,k-1) són ocupades (no buides).
     Cost:
-      - Temps: Θ(len)
-      - Espai: Θ(1)
+      - Temps: O(len)
+      - Espai: O(1)
 */
 bool te_suport(nat i, nat j, nat k, nat len) const noexcept {
   bool ok = true;
@@ -175,8 +175,8 @@ bool te_suport(nat i, nat j, nat k, nat len) const noexcept {
         (2) totes les cel·les (i,x,k) del segment són buides,
         (3) el segment té suport (te_suport).
     Cost:
-      - Temps: Θ(len)
-      - Espai: Θ(1)
+      - Temps: O(len)
+      - Espai: O(1)
 */
 bool pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
   bool ok = (j + len <= _m);
@@ -200,7 +200,7 @@ bool pot_colocar(nat i, nat j, nat k, nat len) const noexcept {
     Pre: 0<=i<_n, 0<=j<_m, 0<=k<_h
     Post: retorna cert si la plaça (i,j,k) és usable per a un contenidor de 10:
           és buida i té suport (k==0 o cel·la inferior ocupada).
-    Cost: Θ(1)
+    Cost: O(1)
 */
 bool lloc_usable10(nat i, nat j, nat k) const noexcept
 {
@@ -228,7 +228,7 @@ bool lloc_usable10(nat i, nat j, nat k) const noexcept
     Cost:
       - Temps: O(_n * _h * _m * _m * len) en el pitjor cas (recorregut + prova posicions).
         (Amb len acotat per 3, és O(_n * _h * _m^2).)
-      - Espai: Θ(1)
+      - Espai: O(1)
 */
 bool millor_ubicacio_lliure(nat len, ubicacio &u, nat &puntuacio) const noexcept
 {

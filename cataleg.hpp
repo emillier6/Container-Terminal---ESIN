@@ -37,13 +37,13 @@ public:
   explicit cataleg(nat numelems);
 
   /*
-    Constructora per còpia (còpia profunda).
+    Constructora per còpia.
     El nou catàleg és independent de l'original (no comparteix memòria interna).
   */
   cataleg(const cataleg& c);
 
   /*
-    Operador d'assignació (còpia profunda).
+    Operador d'assignació.
     Després de l'assignació, el p.i. conté les mateixes associacions que c.
   */
   cataleg& operator=(const cataleg& c);

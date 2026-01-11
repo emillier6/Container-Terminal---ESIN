@@ -7,7 +7,7 @@
     - _pis
 
   Aquesta representació és directa i correspon exactament a la definició
-  matemàtica d'ubicació donada a l'enunciat (<i, j, k>).
+  d'ubicació donada a l'enunciat (<i, j, k>).
 
   Alternatives considerades:
     - Representar la ubicació amb una estructura o classe auxiliar:

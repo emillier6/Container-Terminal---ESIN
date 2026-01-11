@@ -27,7 +27,6 @@ ubicacio::ubicacio(int i, int j, int k){
         _pis = k;
     }else{
         throw error(UbicacioIncorrecta);
-        
     }
 }
 

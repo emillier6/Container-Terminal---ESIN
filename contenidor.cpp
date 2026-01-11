@@ -9,7 +9,7 @@
     - Genera error MatriculaIncorrecta si:
         * m és la cadena buida, o
         * algun caràcter de m no és lletra majúscula ('A'..'Z') ni dígit ('0'..'9').
-    - Genera error LongitudIncorrecta si l ∉ {10, 20, 30}.
+    - Genera error LongitudIncorrecta si l no és {10, 20, 30}.
     Si no hi ha errors, el p.i. queda amb _matricula = m i _longitud = l.
 
   Cost:
@@ -118,7 +118,7 @@ nat contenidor::longitud() const noexcept
     Nota: com que es retorna per valor, es crea una còpia de l'string.
 
   Cost:
-    Temps: O(|_matricula|).
+    Temps: O(1).
     Espai: O(|_matricula|) (còpia del retorn).
 */
 string contenidor::matricula() const noexcept

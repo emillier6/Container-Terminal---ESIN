@@ -26,7 +26,7 @@ public:
     Constructora per còpia.
     Pre: true
     Post: El p.i. és una còpia exacta de u (mateixa matrícula i longitud).
-    Cost: O(|u.matricula|) temps (còpia d'string); O(|u.matricula()|) espai.
+    Cost: O(|u.matricula|) temps (còpia d'string); O(|u.matricula|) espai.
   */
   contenidor(const contenidor &u);
 
@@ -34,7 +34,7 @@ public:
     Operador d'assignació.
     Pre: true
     Post: El p.i. passa a tenir la mateixa matrícula i longitud que u.
-    Cost: O(|u.matricula|) temps; O(|u.matricula()|) espai (pot implicar reallocació de l'string).
+    Cost: O(|u.matricula|) temps; O(|u.matricula|) espai (pot implicar reallocació de l'string).
   */
   contenidor &operator=(const contenidor &u);
 

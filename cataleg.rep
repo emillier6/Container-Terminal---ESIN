@@ -45,7 +45,7 @@ struct node_hash {
     Valor  _v;          // valor associat
     node_hash* _seg;    // següent node de la llista
 
-    // Cost: Θ(1) temps, Θ(1) espai
+    // Cost: O(1) temps, O(1) espai
     node_hash(const string &k, const Valor &v, node_hash* seg = nullptr)
         : _k(k), _v(v), _seg(seg) {}
 };
@@ -75,7 +75,7 @@ static unsigned long const MULT = 31415926;
       2) Barreja addicional (quadrat + MULT) per reduir col·lisions sistemàtiques.
       3) Reducció mòdul _M.
     Cost:
-      - Temps: Θ(|k|)
+      - Temps: O(|k|)
       - Espai: O(1)
 */
 nat hash(const string &k) const noexcept {
@@ -112,8 +112,8 @@ static constexpr double ALFA_MAX = 1.0;   // llindar de factor de càrrega (ajus
       4) Recol·locar tots els nodes re-enllaçant punters (no es creen nodes nous).
       5) Alliberar l’array de llistes antic.
     Cost:
-      - Temps: Θ(n + M_antiga) (es recorre tota la taula i tots els nodes).
-      - Espai: Θ(nou_M) (array de llistes nou).
+      - Temps: O(n + M_antiga) (es recorre tota la taula i tots els nodes).
+      - Espai: O(nou_M) (array de llistes nou).
 */
 void redispersa(nat nou_M){
     node_hash **nova_taula = new node_hash*[nou_M];

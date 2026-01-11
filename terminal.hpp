@@ -31,7 +31,7 @@ class terminal {
       - el recompte d’operacions de grua,
       - consultes sobre ubicació, fragmentació i estat de l’àrea d’espera.
 
-    La representació interna i els invariants es documenten al fitxer terminal.rep.
+    La representació interna es documenta al fitxer terminal.rep.
 */
 public:
   // Alçada màxima permesa del magatzem (nombre de pisos)

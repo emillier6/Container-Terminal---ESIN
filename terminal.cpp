@@ -6,7 +6,7 @@
     ------------------------------
     Retorna el nombre de places que ocupa el contenidor c:
       longitud 10 -> 1, 20 -> 2, 30 -> 3.
-    Cost: Θ(1)
+    Cost: O(1)
 */
 static nat places_contenidor(const contenidor &c) noexcept {
   return c.longitud() / 10;
@@ -27,8 +27,8 @@ static nat places_contenidor(const contenidor &c) noexcept {
       - AlcadaMaxIncorr si h == 0 o h > HMAX
       - EstrategiaIncorr si st no és una estratègia vàlida
     Cost:
-      - Temps: Θ(T) per inicialitzar el magatzem
-      - Espai: Θ(T) per _mag + espai per l'índex (_idx) i l'àrea d'espera
+      - Temps: O(T) per inicialitzar el magatzem
+      - Espai: O(T) per _mag + espai per l'índex (_idx) i l'àrea d'espera
 */
 terminal::terminal(nat n, nat m, nat h, estrategia st)
   : _n(n), _m(m), _h(h), _st(st),
@@ -60,11 +60,11 @@ terminal::terminal(nat n, nat m, nat h, estrategia st)
     ------------------------------
     Pre: true
     Post:
-      - this és una còpia independent de b (còpia profunda de _mag).
+      - this és una còpia independent de b (còpia de _mag).
       - _idx i _espera també queden copiats (segons les seves operacions de còpia).
     Cost:
-      - Temps: Θ(T) per copiar _mag + cost de copiar _idx + cost de copiar _espera
-      - Espai: Θ(T) (nova memòria per _mag) + memòria per les còpies internes
+      - Temps: O(T) per copiar _mag + cost de copiar _idx + cost de copiar _espera
+      - Espai: O(T) (nova memòria per _mag) + memòria per les còpies internes
 */
 terminal::terminal(const terminal &b)
   : _n(b._n), _m(b._m), _h(b._h), _st(b._st),
@@ -89,11 +89,11 @@ terminal::terminal(const terminal &b)
     ------------------------------
     Pre: true
     Post:
-      - this passa a contenir el mateix estat que b (còpia profunda de _mag).
+      - this passa a contenir el mateix estat que b (còpia de _mag).
       - En cas d'autoassignació, no es modifica res.
     Cost:
-      - Temps: Θ(T) per copiar _mag + cost d'assignar _idx + cost d'assignar _espera
-      - Espai addicional: Θ(T) temporal per nou_mag (després alliberat)
+      - Temps: O(T) per copiar _mag + cost d'assignar _idx + cost d'assignar _espera
+      - Espai addicional: O(T) temporal per nou_mag (després alliberat)
 */
 terminal &terminal::operator=(const terminal &b) {
   bool mateix = (this == &b);
@@ -131,8 +131,8 @@ terminal &terminal::operator=(const terminal &b) {
     Pre: true
     Post: allibera la memòria dinàmica associada al magatzem.
     Cost:
-      - Temps: Θ(1) (alliberament de l'array)
-      - Espai: Θ(1) addicional
+      - Temps: O(1) (alliberament de l'array)
+      - Espai: O(1) addicional
 */
 terminal::~terminal() noexcept {
   delete[] _mag;
@@ -141,7 +141,7 @@ terminal::~terminal() noexcept {
 
 /*
     Consultors simples de dimensions/configuració/comptadors.
-    Cost: Θ(1)
+    Cost: O(1)
 */
 nat terminal::num_fileres() const noexcept { return _n; }
 nat terminal::num_places() const noexcept { return _m; }
@@ -197,8 +197,8 @@ nat terminal::longitud(const string &m) const {
     Errors:
       - UbicacioNoMagatzem si u no és una ubicació vàlida del magatzem
     Cost:
-      - Temps: Θ(1)
-      - Espai: Θ(1)
+      - Temps: O(1)
+      - Espai: O(1)
 */
 void terminal::contenidor_ocupa(const ubicacio &u, string &m) const {
   int i = u.filera();
@@ -219,7 +219,7 @@ void terminal::contenidor_ocupa(const ubicacio &u, string &m) const {
       - Escriu a l totes les matrícules dels contenidors a l'àrea d'espera,
         ordenades alfabèticament creixent.
     Cost:
-      - Temps: Θ(e) per construir l + cost de l.sort().
+      - Temps: O(e) per construir l + cost de l.sort().
         El cost de sort de list és O(e log e).
       - Espai: O(1) addicional (la llista l és sortida; l.sort és in-place)
 */
@@ -248,14 +248,14 @@ void terminal::area_espera(list<string> &l) const noexcept {
 
       Part B) Cerca d'ubicació:
         - Estratègia FIRST_FIT:
-            Pitjor cas: Θ(T * len) ≃ Θ(T) (len<=3) per provar pot_colocar a totes les cel·les.
-            Millor cas: Θ(len) si encaixa a la primera ubicació provada.
+            Pitjor cas: O(T * len) ≃ O(T) (len<=3) per provar pot_colocar a totes les cel·les.
+            Millor cas: O(len) si encaixa a la primera ubicació provada.
         - Estratègia LLIURE:
             Depèn de millor_ubicacio_lliure(len, ...).
             (Segons terminal.rep, pitjor cas O(n*h*m^2) amb len acotat.)
 
       Part C) Escriure al magatzem + actualitzar índex:
-        - Temps: Θ(len) per escriure len cel·les + O(1) esperat per _idx.assig.
+        - Temps: O(len) per escriure len cel·les + O(1) esperat per _idx.assig.
 
       Part D) Recol·locació des de l'espera:
         - S'executa mentre es pugui moure algun contenidor de l'espera al magatzem.
@@ -270,13 +270,13 @@ void terminal::area_espera(list<string> &l) const noexcept {
 void terminal::insereix_contenidor(const contenidor &c) {
   string mat = c.matricula();
   nat len = places_contenidor(c);
-
+  // --- 1) Comprovar duplicat ---
   if (_idx.existeix(mat)) throw error(MatriculaDuplicada);
 
   bool col_locat = false;
   ubicacio u(0, 0, 0);
 
-  // --- 1) Buscar lloc segons estratègia ---
+  // --- 2) Buscar lloc segons estratègia ---
   if (_st == estrategia::FIRST_FIT)
   {
     // Recorregut filera -> placa -> pis
@@ -303,7 +303,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
     col_locat = millor_ubicacio_lliure(len, u, score);
   }
 
-  // --- 2) Escriure al magatzem o posar a espera ---
+  // --- 3) Escriure al magatzem o posar a espera ---
   if (col_locat) {
     nat i0 = (nat)u.filera();
     nat j0 = (nat)u.placa();
@@ -318,7 +318,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
     _idx.assig(mat, info_cont(c, false, u));
     _ops_grua++; // inserció directa al magatzem
 
-    // --- 3) Recol·locació des de l’espera ---
+    // --- 4) Recol·locació des de l’espera ---
     bool mogut = true;
     while (mogut) {
       mogut = false;
@@ -426,7 +426,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
           4) Recol·loca contenidors des de l'espera segons l'estratègia (incrementant _ops_grua).
 
     Cost (cas magatzem):
-      - Construcció de cal_netejar: Θ(m)
+      - Construcció de cal_netejar: O(m)
       - Determinació de contenidors necessaris:
           Escaneja pisos per sobre i pot repetir fins estabilitzar.
           Pitjor cas: O(h * m * h * m) no és una bona lectura; millor descriure-ho com:
@@ -440,7 +440,7 @@ void terminal::insereix_contenidor(const contenidor &c) {
           Amb fins a n_nec contenidors: O(n_nec * h) per selecció.
           A més, aquest procés pot repetir-se fins buidar necessaris: O(n_nec^2 * h) conservador.
 
-      - Alliberar target: Θ(len) (len<=3)
+      - Alliberar target: O(len) (len<=3)
       - Recol·locació des de l'espera: similar al cas de insereix_contenidor, en funció de e.
 */
 void terminal::retira_contenidor(const string &m) {
@@ -480,8 +480,7 @@ void terminal::retira_contenidor(const string &m) {
     for (nat j = placa; j < placa + len_target; ++j)
       cal_netejar[j] = true;
 
-    // --- SUBSTITUCIÓ: abans era list<string> necessaris; ---
-    nat cap_nec = _m * _h;               // màxim contenidors diferents a una fila
+    nat cap_nec = _m * _h; // màxim contenidors diferents a una fila
     string *necessaris = new string[cap_nec];
     nat n_nec = 0;
 
@@ -734,8 +733,8 @@ void terminal::retira_contenidor(const string &m) {
       Recorre el magatzem i compta els segments "usables" màxims de longitud 1,
       on una cel·la és usable si és buida i té suport (k==0 o cel·la inferior ocupada).
     Cost:
-      - Temps: Θ(T) (cada cel·la s'examina un nombre constant de vegades)
-      - Espai: Θ(1)
+      - Temps: O(T) (cada cel·la s'examina un nombre constant de vegades)
+      - Espai: O(1)
 */
 nat terminal::fragmentacio() const noexcept {
   nat frag = 0;

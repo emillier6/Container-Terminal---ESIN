@@ -20,8 +20,8 @@
     Post: crea un catàleg buit amb _M = 2*numelems+1 (mínim 1) i totes les
           posicions inicialitzades a nullptr; _quants=0.
     Cost:
-      - Temps: Θ(M)
-      - Espai: Θ(M)
+      - Temps: O(M)
+      - Espai: O(M)
 */
 template <typename Valor>
 cataleg<Valor>::cataleg(nat numelems) {
@@ -36,13 +36,13 @@ cataleg<Valor>::cataleg(nat numelems) {
 
 /*
     ------------------------------
-    Constructor per còpia (deep copy)
+    Constructor per còpia
     ------------------------------
     Pre: true
     Post: this és una còpia independent de c.
     Cost:
-      - Temps: Θ(M + n)
-      - Espai: Θ(M + n)
+      - Temps: O(M + n)
+      - Espai: O(M + n)
 */
 template <typename Valor>
 cataleg<Valor>::cataleg(const cataleg &c) {
@@ -81,7 +81,7 @@ cataleg<Valor>::cataleg(const cataleg &c) {
     Pre: true
     Post: this conté una còpia independent de c i retorna *this.
     Cost:
-      - Temps: Θ(M + n) per destruir + Θ(M + n) per copiar
+      - Temps: O(M + n) per destruir + O(M + n) per copiar
       - Espai addicional: O(1) (sense comptar la nova memòria reservada)
 */
 template <typename Valor>
@@ -133,7 +133,7 @@ cataleg<Valor>& cataleg<Valor>::operator=(const cataleg &c) {
     Pre: true
     Post: memòria alliberada.
     Cost:
-      - Temps: Θ(M + n)
+      - Temps: O(M + n)
       - Espai: O(1) addicional
 */
 template <typename Valor>
@@ -159,15 +159,15 @@ cataleg<Valor>::~cataleg() noexcept {
       - si k existia -> actualitza valor
       - si k no existia -> insereix node nou i incrementa _quants
     Cost:
-      - Millor cas: Θ(1) (actualització immediata o inserció sense col·lisions).
+      - Millor cas: O(1) (actualització immediata o inserció sense col·lisions).
       - Cas mitjà (esperat): O(1), assumint una funció hash “bona” i α controlat.
       - Pitjor cas:
           * O(k) per cercar/actualitzar/inserir dins de la llista, on k és la longitud de
             la llista de sinònims (O(n) en el pitjor cas).
-          * Θ(n) quan es fa redispersió (es recol·loquen tots els elements).
+          * O(n) quan es fa redispersió (es recol·loquen tots els elements).
       - Espai:
-          * Θ(1) per inserció (1 node) si no hi ha redispersió.
-          * Θ(nou_M) addicional temporal quan es fa redispersió (array de llistes).
+          * O(1) per inserció (1 node) si no hi ha redispersió.
+          * O(nou_M) addicional temporal quan es fa redispersió (array de llistes).
 */
 template <typename Valor>
 void cataleg<Valor>::assig(const string &k, const Valor &v) {
@@ -315,7 +315,7 @@ Valor cataleg<Valor>::operator[](const string &k) const {
     ------------------------------
     Pre: true
     Post: retorna _quants.
-    Cost: Θ(1)
+    Cost: O(1)
 */
 template <typename Valor>
 nat cataleg<Valor>::quants() const noexcept {
